@@ -3,7 +3,6 @@ name: Deploy Vite to GitHub Pages
 on:
     push:
         branches: [main]
-    workflow_dispatch: # pulsante "Run workflow"
 
 permissions:
     contents: read
