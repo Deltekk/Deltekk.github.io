@@ -3,6 +3,16 @@
 /* Registra il plugin HeroUI */
 @plugin "./hero.ts";
 
+@layer base {
+	a {
+		color: white !important;
+		text-decoration: none !important;
+	}
+	a:visited {
+		color: white !important;
+	}
+}
+
 :root {
 	font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
 	line-height: 1.5;

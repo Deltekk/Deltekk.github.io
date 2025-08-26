@@ -18,7 +18,6 @@ export default function App() {
 
 				{/* card HeroUI */}
 				<Card className="flex flex-col border border-white/10 bg-white/5 p-10">
-					<h4> PIPO IN CULO </h4>
 					<CardBody>
 						<p className="text-white/80">
 							Questo è un componente <strong>Card</strong> di HeroUI, reso ancora più
