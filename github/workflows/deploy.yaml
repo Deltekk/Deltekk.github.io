@@ -1,0 +1,34 @@
+name: Deploy Vite to GitHub Pages
+
+on:
+    push:
+        branches: [main] # il branch dove pushare le modifiche per github pages
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+jobs:
+    build-deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "22"
+
+            - name: Install deps
+              run: npm ci
+
+            - name: Build
+              run: npm run build
+
+            # Carica la cartella di output (Vite=dist)
+            - uses: actions/upload-pages-artifact@v3
+              with:
+                  path: dist
+
+            # Pubblica su GitHub Pages
+            - uses: actions/deploy-pages@v4
