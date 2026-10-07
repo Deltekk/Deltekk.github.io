@@ -247,7 +247,7 @@
   prezzo: 7.20
   valuta: "€"
   priorità: 1
-  note: ""
+  note: "Ancora deve uscire"
 
 - id: Manga-Omocat-Omori3
   quantità: 1
@@ -260,7 +260,7 @@
   prezzo: 7.20
   valuta: "€"
   priorità: 1
-  note: ""
+  note: "Ancora deve uscire"
 
 - id: Manga-Astra-Awarè
   quantità: 1
@@ -583,7 +583,7 @@
   prezzo: 299
   valuta: "€"
   priorità: 1
-  note: "Ho scelto questo vinile per il rapporto qualità/prezzo, anche per il fatto di poterlo manutenere cambiando lo stilo e facendo upgrade."
+  note: "Ho scelto questo giradischi per il rapporto qualità/prezzo, anche per il fatto di poterlo manutenere cambiando lo stilo e facendo upgrade."
 
 - id: Ele-CoralUSB
   quantità: 1
