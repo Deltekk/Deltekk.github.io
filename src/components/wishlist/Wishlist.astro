@@ -1,0 +1,203 @@
+---
+// Contenuto comune delle pagine wishlist: titolo, disclaimer, ricerca, ordinamento,
+// filtri per categoria e griglia delle voci.
+// Il disclaimer generale è uguale per tutti; quelli specifici di una wishlist si passano
+// come contenuto del componente, con <Disclaimer titolo="...">.
+import { Accordion } from "@/components/starwind/accordion";
+import { Button } from "@/components/starwind/button";
+import { Input } from "@/components/starwind/input";
+import { Select, SelectTrigger, SelectItem, SelectContent } from "@/components/starwind/select";
+import CardVoce from "@/components/wishlist/CardVoce.astro";
+import Disclaimer from "@/components/wishlist/Disclaimer.astro";
+import { iconaCategoria } from "@/lib/categorie";
+import { leggiWishlist, type NomeWishlist } from "@/lib/wishlist";
+import Category from "@tabler/icons/outline/category.svg";
+import LayoutGrid from "@tabler/icons/outline/layout-grid.svg";
+import Search from "@tabler/icons/outline/search.svg";
+import SortAsc from "@tabler/icons/outline/sort-ascending-numbers.svg";
+import SortDesc from "@tabler/icons/outline/sort-descending-numbers.svg";
+import Star from "@tabler/icons/outline/star.svg";
+
+interface Props {
+  collezione: NomeWishlist;
+  titolo: string;
+}
+
+const { collezione, titolo } = Astro.props;
+
+const ordinamenti = [
+  { value: "priorita", label: "Priorità", Icona: Star },
+  { value: "categoria", label: "Categoria", Icona: Category },
+  { value: "prezzo-asc", label: "Prezzo crescente", Icona: SortAsc },
+  { value: "prezzo-desc", label: "Prezzo decrescente", Icona: SortDesc },
+];
+
+const voci = await leggiWishlist(collezione);
+const categorie = [...new Set(voci.map((v) => v.data.categoria))].sort((a, b) => a.localeCompare(b, "it"));
+---
+
+<section class="mx-auto flex max-w-sm flex-col items-center justify-center px-6 py-16 text-center md:max-w-5xl">
+  <h1 class="mb-10 w-full text-center text-3xl font-bold uppercase">{titolo}</h1>
+
+  <Accordion defaultValue="Generale" class="w-full">
+    <Disclaimer titolo="Generale">
+      Per la natura del sito, <b>i prezzi</b> che vedete sono <b>indicativi</b> e non aggiornati. Per quanto riguarda
+      la scelta da fare, vi chiedo di basare la vostra decisione sulla <b>priorità degli item</b>. Infine, vi voglio
+      chiedere di cerare cose di <b class="font-extrabold">qualità, riparabili e manutenibili.</b>
+    </Disclaimer>
+    <slot />
+  </Accordion>
+
+  <div class="my-8 w-full">
+    <div class="my-5 flex w-full flex-col gap-5 md:flex-row">
+      <div class="relative w-full">
+        <Search class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+        <Input id="cerca" type="search" placeholder="Cerca nella wishlist..." class="pl-9" />
+      </div>
+
+      <div class="relative w-full md:w-1/3">
+        {
+          ordinamenti.map(({ value, Icona }) => (
+            <span
+              data-icona-ordina={value}
+              hidden={value !== "priorita"}
+              class="pointer-events-none absolute top-1/2 left-3 z-10 -translate-y-1/2"
+            >
+              <Icona class="size-4" />
+            </span>
+          ))
+        }
+
+        <Select id="ordina" defaultValue="priorita" name="Ordina per...">
+          <SelectTrigger class="w-full pl-9" placeholder="Ordina per" />
+          <SelectContent>
+            {
+              ordinamenti.map(({ value, label, Icona }) => (
+                <SelectItem value={value}>
+                  <span class="flex items-center gap-2">
+                    <Icona class="size-4" />
+                    {label}
+                  </span>
+                </SelectItem>
+              ))
+            }
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+
+    <div class="my-2 flex flex-wrap gap-2">
+      {
+        ["Tutte", ...categorie].map((c) => {
+          const Icona = c === "Tutte" ? LayoutGrid : iconaCategoria(c);
+          return (
+            <Button
+              variant="outline"
+              size="sm"
+              data-filtro={c === "Tutte" ? "" : c}
+              aria-pressed={c === "Tutte" ? "true" : "false"}
+              class="aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+            >
+              <Icona />
+              {c}
+            </Button>
+          );
+        })
+      }
+    </div>
+  </div>
+
+  <div id="griglia" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    {
+      voci.map((voce) => (
+        <div
+          data-voce
+          data-nome={voce.data.nome}
+          data-testo={`${voce.data.nome} ${voce.data.categoria} ${voce.data.note ?? ""}`.toLowerCase()}
+          data-categoria={voce.data.categoria}
+          data-prezzo={voce.data.prezzo ?? ""}
+          data-priorita={voce.data.priorità}
+        >
+          <CardVoce voce={voce} />
+        </div>
+      ))
+    }
+  </div>
+
+  <p id="vuoto" hidden class="mt-8 text-center">Nessun risultato.</p>
+</section>
+
+<script>
+  type Confronto = (a: HTMLElement, b: HTMLElement) => number;
+
+  // Elementi
+  const input = document.querySelector<HTMLInputElement>("#cerca");
+  const griglia = document.querySelector<HTMLElement>("#griglia");
+  const voci = document.querySelectorAll<HTMLElement>("[data-voce]");
+  const bottoni = document.querySelectorAll<HTMLElement>("[data-filtro]");
+  const vuoto = document.querySelector<HTMLElement>("#vuoto");
+  const ordina = document.querySelector<HTMLElement>("#ordina");
+  const iconeOrdina = document.querySelectorAll<HTMLElement>("[data-icona-ordina]");
+
+  // Filtro: ricerca + categoria
+  let categoria = "";
+
+  function aggiorna() {
+    const q = input?.value.trim().toLowerCase() ?? "";
+    let visibili = 0;
+    voci.forEach((voce) => {
+      const okTesto = voce.dataset.testo?.includes(q) ?? false;
+      const okCategoria = !categoria || voce.dataset.categoria === categoria;
+      voce.hidden = !(okTesto && okCategoria);
+      if (!voce.hidden) visibili++;
+    });
+    if (vuoto) vuoto.hidden = visibili > 0;
+  }
+
+  // Ordinamento
+  const prezzo = (el: HTMLElement) => (el.dataset.prezzo ? Number(el.dataset.prezzo) : null);
+
+  const perNome: Confronto = (a, b) => (a.dataset.nome ?? "").localeCompare(b.dataset.nome ?? "", "it");
+
+  const perPrezzo =
+    (verso: 1 | -1): Confronto =>
+    (a, b) => {
+      const pa = prezzo(a);
+      const pb = prezzo(b);
+      if (pa === null && pb === null) return 0;
+      if (pa === null) return 1;
+      if (pb === null) return -1;
+      return (pa - pb) * verso;
+    };
+
+  const criteri: Record<string, Confronto> = {
+    priorita: (a, b) => Number(a.dataset.priorita) - Number(b.dataset.priorita),
+    categoria: (a, b) => (a.dataset.categoria ?? "").localeCompare(b.dataset.categoria ?? "", "it"),
+    "prezzo-asc": perPrezzo(1),
+    "prezzo-desc": perPrezzo(-1),
+  };
+
+  function applicaOrdine(valore: string) {
+    const criterio = criteri[valore];
+    if (!griglia || !criterio) return;
+    [...voci].sort((a, b) => criterio(a, b) || perNome(a, b)).forEach((el) => griglia.appendChild(el));
+  }
+
+  // Eventi
+  input?.addEventListener("input", aggiorna);
+
+  bottoni.forEach((b) =>
+    b.addEventListener("click", () => {
+      categoria = b.dataset.filtro ?? "";
+      bottoni.forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      aggiorna();
+    }),
+  );
+
+  // La Select di Starwind non emette "change": il valore arriva con starwind:value-change
+  ordina?.addEventListener("starwind:value-change", (e) => {
+    const valore = (e as CustomEvent).detail.value;
+    iconeOrdina.forEach((i) => (i.hidden = i.dataset.iconaOrdina !== valore));
+    applicaOrdine(valore);
+  });
+</script>

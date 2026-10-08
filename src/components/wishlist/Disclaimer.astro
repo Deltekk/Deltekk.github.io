@@ -1,0 +1,24 @@
+---
+// Un disclaimer nell'elenco in cima alla wishlist; il testo è il contenuto del componente
+import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/starwind/accordion";
+import AlertTriangle from "@tabler/icons/outline/alert-triangle.svg";
+
+interface Props {
+  titolo: string;
+}
+
+const { titolo } = Astro.props;
+---
+
+<AccordionItem value={titolo}>
+  <AccordionTrigger class="font-bold">
+    <AlertTriangle class="text-error size-4" />
+    Disclaimer {titolo}
+  </AccordionTrigger>
+  <AccordionContent>
+    <p class="w-full">
+      <b class="text-error">Disclaimer {titolo}:</b>
+      <slot />
+    </p>
+  </AccordionContent>
+</AccordionItem>

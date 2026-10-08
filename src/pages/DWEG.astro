@@ -1,0 +1,533 @@
+---
+// src/pages/DWEG.astro
+// DWEG - Deltek Wishlist Entry Generator: compila il modulo e copia la voce YAML
+// da incollare in src/data/wishlist*.yaml. Tutto avviene nel browser.
+import Layout from "@/layouts/Layout.astro";
+import { iconaCategoria } from "@/lib/categorie";
+import { NOMI_WISHLIST } from "@/lib/wishlist";
+import { getCollection } from "astro:content";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/starwind/card";
+import { Input } from "@/components/starwind/input";
+import { Textarea } from "@/components/starwind/textarea";
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import { button } from "@/components/starwind/button/variants";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/starwind/input-group";
+import Campo from "@/components/dweg/Campo.astro";
+import { PREFISSI } from "@/scripts/dweg/voce";
+
+// ----- ICONE ------
+
+import Gift from "@tabler/icons/outline/gift.svg";
+import Photo from "@tabler/icons/outline/photo.svg";
+import Upload from "@tabler/icons/outline/upload.svg";
+import Trash from "@tabler/icons/outline/trash.svg";
+import Loader from "@tabler/icons/outline/loader-2.svg";
+import CircleCheck from "@tabler/icons/outline/circle-check.svg";
+import AlertTriangle from "@tabler/icons/outline/alert-triangle.svg";
+import ListDetails from "@tabler/icons/outline/list-details.svg";
+import Signature from "@tabler/icons/outline/signature.svg";
+import Category from "@tabler/icons/outline/category.svg";
+import BuildingStore from "@tabler/icons/outline/building-store.svg";
+import Microphone from "@tabler/icons/outline/microphone-2.svg";
+import Link from "@tabler/icons/outline/link.svg";
+import Coin from "@tabler/icons/outline/coin.svg";
+import CurrencyEuro from "@tabler/icons/outline/currency-euro.svg";
+import CurrencyDollar from "@tabler/icons/outline/currency-dollar.svg";
+import CurrencyPound from "@tabler/icons/outline/currency-pound.svg";
+import Stack from "@tabler/icons/outline/stack-2.svg";
+import Minus from "@tabler/icons/outline/minus.svg";
+import Plus from "@tabler/icons/outline/plus.svg";
+import Star from "@tabler/icons/outline/star.svg";
+import Notes from "@tabler/icons/outline/notes.svg";
+import Hash from "@tabler/icons/outline/hash.svg";
+import Wand from "@tabler/icons/outline/wand.svg";
+import FileCode from "@tabler/icons/outline/file-code.svg";
+import Eye from "@tabler/icons/outline/eye.svg";
+import Copy from "@tabler/icons/outline/copy.svg";
+import Check from "@tabler/icons/outline/check.svg";
+import ExternalLink from "@tabler/icons/outline/external-link.svg";
+
+import Tag from "@tabler/icons/outline/tag.svg";
+
+const valute = [
+  { simbolo: "€", nome: "Euro", Icona: CurrencyEuro },
+  { simbolo: "$", nome: "Dollaro", Icona: CurrencyDollar },
+  { simbolo: "£", nome: "Sterlina", Icona: CurrencyPound },
+];
+
+// ----- DATI ESISTENTI -----
+// Servono per i suggerimenti nei campi e per bloccare gli id duplicati
+
+const voci = (await Promise.all(NOMI_WISHLIST.map((nome) => getCollection(nome)))).flat();
+const idEsistenti = Object.fromEntries(voci.map((voce) => [voce.id, voce.collection]));
+
+const ordinati = (valori: (string | undefined)[]) =>
+  [...new Set(valori.filter((valore): valore is string => Boolean(valore)))].sort((a, b) => a.localeCompare(b, "it"));
+
+const categorie = ordinati([...Object.keys(PREFISSI), ...voci.map((v) => v.data.categoria)]);
+const publisher = ordinati(voci.map((v) => v.data.publisher));
+const artisti = ordinati(voci.map((v) => v.data.artista));
+
+// Radio con l'aspetto dei bottoni Starwind, evidenziato quando è selezionato
+const stileScelta = button({
+  variant: "outline",
+  class: "cursor-pointer has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:ring-3 has-focus-visible:ring-outline/50",
+});
+
+// ----- ----- -----
+---
+<Layout>
+  <section class="mx-auto max-w-6xl px-6 py-16">
+
+    <header class="mb-10 flex items-center gap-4">
+      <div class="bg-primary text-primary-foreground grid size-12 place-items-center rounded-xl">
+        <Gift class="size-7" />
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold tracking-wide">DWEG</h1>
+        <p class="text-muted-foreground">Deltek Wishlist Entry Generator</p>
+      </div>
+    </header>
+
+    <form
+      id="dweg"
+      data-id-esistenti={JSON.stringify(idEsistenti)}
+      autocomplete="off"
+      class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]"
+    >
+      <div class="flex min-w-0 flex-col gap-6">
+
+        <!-- Immagine -->
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2"><Photo class="text-primary-accent size-5" /> Immagine</CardTitle>
+            <CardDescription>
+              Nel negozio fai tasto destro sull'immagine → <b>Copia immagine</b>, poi premi Ctrl+V su questa pagina.
+              Puoi anche trascinare un file o sceglierlo dal disco.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div
+              id="zona-immagine"
+              class="border-input data-trascina:border-primary data-trascina:bg-primary/5 flex flex-col gap-4 rounded-lg border-2 border-dashed p-4 sm:flex-row sm:items-center"
+            >
+              <div class="bg-muted text-muted-foreground relative grid size-36 shrink-0 place-items-center overflow-hidden rounded-md">
+                <Photo class="size-10" />
+                <img id="miniatura" alt="" hidden class="bg-muted absolute inset-0 size-full object-contain" />
+              </div>
+              <div class="flex min-w-0 flex-col gap-3">
+                <div class="flex flex-wrap gap-2">
+                  <Button variant="outline" id="scegli-file"><Upload /> Scegli file</Button>
+                  <Button variant="ghost" id="rimuovi-immagine" hidden><Trash /> Rimuovi</Button>
+                </div>
+                <p
+                  id="info-immagine"
+                  data-stato="vuota"
+                  class="group text-muted-foreground flex items-start gap-2 text-sm data-[stato=errore]:text-error data-[stato=pronta]:text-success"
+                >
+                  <Photo class="mt-0.5 hidden size-4 shrink-0 group-data-[stato=vuota]:block" />
+                  <Loader class="mt-0.5 hidden size-4 shrink-0 animate-spin group-data-[stato=attesa]:block" />
+                  <CircleCheck class="mt-0.5 hidden size-4 shrink-0 group-data-[stato=pronta]:block" />
+                  <AlertTriangle class="mt-0.5 hidden size-4 shrink-0 group-data-[stato=errore]:block" />
+                  <span id="testo-immagine">Facoltativa: senza immagine la card non mostra foto e badge.</span>
+                </p>
+                <input id="file-immagine" type="file" accept="image/*" hidden />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Dettagli -->
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2"><ListDetails class="text-primary-accent size-5" /> Dettagli</CardTitle>
+          </CardHeader>
+          <CardContent class="grid gap-5 sm:grid-cols-2">
+
+            <Campo etichetta="Nome" per="nome" obbligatorio class="sm:col-span-2">
+              <Signature slot="icona" />
+              <Input id="nome" name="nome" placeholder="Nome dell'articolo" autofocus />
+            </Campo>
+
+            <Campo etichetta="Categoria" per="categoria" obbligatorio class="sm:col-span-2">
+              <Category slot="icona" />
+              <div class="flex flex-wrap gap-2">
+                {categorie.map((categoria) => {
+                  const Icona = iconaCategoria(categoria);
+                  return (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      data-categoria={categoria}
+                      aria-pressed="false"
+                      class="aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+                    >
+                      <Icona />{categoria}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Input id="categoria" name="categoria" list="elenco-categorie" placeholder="…oppure scrivine un'altra" />
+              <datalist id="elenco-categorie">{categorie.map((c) => <option value={c} />)}</datalist>
+            </Campo>
+
+            <Campo etichetta="Publisher" per="publisher" obbligatorio>
+              <BuildingStore slot="icona" />
+              <Input id="publisher" name="publisher" list="elenco-publisher" placeholder="Etichetta, editore o marca" />
+              <datalist id="elenco-publisher">{publisher.map((p) => <option value={p} />)}</datalist>
+            </Campo>
+
+            <Campo etichetta="Artista" per="artista">
+              <Microphone slot="icona" />
+              <Input id="artista" name="artista" list="elenco-artisti" placeholder="Facoltativo" />
+              <datalist id="elenco-artisti">{artisti.map((a) => <option value={a} />)}</datalist>
+            </Campo>
+
+            <Campo etichetta="Link" per="link" obbligatorio class="sm:col-span-2">
+              <Link slot="icona" />
+              <Input id="link" name="link" type="url" placeholder="https://…" />
+            </Campo>
+
+            <Campo etichetta="Prezzo" per="prezzo">
+              <Coin slot="icona" />
+              <div class="flex gap-2">
+                <Input id="prezzo" name="prezzo" inputmode="decimal" placeholder="29,90 · vuoto = N/A" />
+                <div role="radiogroup" aria-label="Valuta" class="flex gap-1">
+                  {valute.map(({ simbolo, nome, Icona }) => (
+                    <label class={stileScelta} title={nome}>
+                      <input type="radio" name="valuta" value={simbolo} checked={simbolo === "€"} class="sr-only" />
+                      <Icona />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </Campo>
+
+            <Campo etichetta="Quantità" per="quantita">
+              <Stack slot="icona" />
+              <InputGroup>
+                <InputGroupAddon>
+                  <InputGroupButton id="meno" size="icon-sm" aria-label="Meno"><Minus /></InputGroupButton>
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="quantita"
+                  name="quantità"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="1"
+                  class="text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton id="piu" size="icon-sm" aria-label="Più"><Plus /></InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+            </Campo>
+
+            <Campo etichetta="Priorità" class="sm:col-span-2">
+              <Star slot="icona" />
+              <div class="flex flex-wrap items-center gap-3">
+                <div role="radiogroup" aria-label="Priorità" class="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <label class={stileScelta}>
+                      <input type="radio" name="priorità" value={n} checked={n === 3} class="sr-only" />
+                      {n}
+                    </label>
+                  ))}
+                </div>
+                <span class="text-muted-foreground text-sm">1 = lo desidero di più · 5 = di meno</span>
+              </div>
+            </Campo>
+
+            <Campo etichetta="Note" per="note" class="sm:col-span-2">
+              <Notes slot="icona" />
+              <Textarea id="note" name="note" placeholder="Facoltative: varianti, taglie, preferenze…" />
+            </Campo>
+
+            <Campo etichetta="Id" per="id" obbligatorio class="sm:col-span-2">
+              <Hash slot="icona" />
+              <InputGroup>
+                <InputGroupInput id="id" name="id" spellcheck="false" placeholder="Si genera da categoria, artista/publisher e nome" />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton id="id-automatico" title="Torna all'id automatico"><Wand /> Auto</InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+              <p class="text-muted-foreground text-xs">
+                Formato Prefisso-Artista/Publisher-Nome, come le voci esistenti. Puoi modificarlo a mano.
+              </p>
+            </Campo>
+
+          </CardContent>
+        </Card>
+
+        <!-- YAML -->
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2"><FileCode class="text-primary-accent size-5" /> YAML da aggiungere</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre id="yaml" class="bg-muted rounded-md p-4 font-mono text-sm leading-relaxed break-all whitespace-pre-wrap"></pre>
+            <p id="nota-yaml" hidden class="text-muted-foreground mt-2 text-xs">
+              L'immagine è abbreviata qui, ma viene copiata per intero.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Anteprima e azioni -->
+      <aside class="flex flex-col gap-4 lg:sticky lg:top-22">
+        <p class="text-muted-foreground flex items-center gap-2 text-xs font-semibold tracking-wider uppercase">
+          <Eye class="size-4" /> Anteprima card
+        </p>
+
+        <!-- Come le card delle pagine wishlist; senza padding in alto quando c'è la foto -->
+        <Card class="has-[>[data-media]:not([hidden])]:pt-0">
+          <div id="anteprima-media" data-media hidden class="relative">
+            <img id="anteprima-img" alt="" class="aspect-square w-full rounded-t-xl object-cover" />
+            <Badge tone="primary-accent" appearance="frosted" size="lg" class="absolute top-0 left-0 mt-2 ml-2">
+              <Stack /> <span id="anteprima-quantita"></span>
+            </Badge>
+            <Badge tone="primary-accent" appearance="frosted" size="lg" class="absolute top-0 right-0 mt-2 mr-2">
+              {categorie.map((categoria) => {
+                const Icona = iconaCategoria(categoria);
+                return <span data-icona-categoria={categoria} hidden class="flex"><Icona /></span>;
+              })}
+              <span data-icona-categoria="" class="flex"><Tag /></span>
+              <span id="anteprima-categoria"></span>
+            </Badge>
+          </div>
+
+          <CardHeader class="text-center">
+            <CardTitle id="anteprima-nome" />
+            <CardDescription id="anteprima-autore" />
+          </CardHeader>
+          <CardContent>
+            <p id="anteprima-note" class="text-center"></p>
+          </CardContent>
+          <CardFooter class="flex flex-col gap-3">
+            <div class="flex w-full items-center justify-between">
+              <span class="flex items-center gap-2"><Star class="size-5" /> <span id="anteprima-priorita"></span></span>
+              <p id="anteprima-prezzo" class="text-2xl font-semibold"></p>
+            </div>
+            <Button as="a" id="anteprima-link" target="_blank" rel="noopener" variant="primary" size="lg" class="w-full">
+              Vedi <ExternalLink />
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card size="sm">
+          <CardContent class="flex flex-col gap-3">
+            <div
+              id="stato"
+              data-stato="errore"
+              class="group flex items-start gap-2 text-sm text-error data-[stato=pronta]:text-success"
+            >
+              <AlertTriangle class="mt-0.5 size-4 shrink-0 group-data-[stato=pronta]:hidden" />
+              <CircleCheck class="mt-0.5 hidden size-4 shrink-0 group-data-[stato=pronta]:block" />
+              <ul id="problemi" class="flex flex-col gap-1"></ul>
+            </div>
+            <Button id="copia" variant="primary" class="group w-full">
+              <Copy class="group-data-copiato:hidden" />
+              <Check class="hidden group-data-copiato:block" />
+              <span class="group-data-copiato:hidden">Copia YAML</span>
+              <span class="hidden group-data-copiato:inline">Copiato!</span>
+            </Button>
+            <Button id="nuova" variant="outline" class="w-full"><Plus /> Nuova voce</Button>
+          </CardContent>
+        </Card>
+      </aside>
+    </form>
+  </section>
+</Layout>
+
+<script>
+  import { controlla, creaYaml, idAutomatico, leggiVoce, linkValido, type Voce } from "@/scripts/dweg/voce";
+  import { convertiImmagine, scaricaImmagine, type ImmagineConvertita } from "@/scripts/dweg/immagine";
+
+  const elemento = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  // Elementi
+  const modulo = elemento<HTMLFormElement>("dweg");
+  const campoId = elemento<HTMLInputElement>("id");
+  const campoCategoria = elemento<HTMLInputElement>("categoria");
+  const campoQuantità = elemento<HTMLInputElement>("quantita");
+  const zonaImmagine = elemento("zona-immagine");
+  const sceltaFile = elemento<HTMLInputElement>("file-immagine");
+  const testoImmagine = elemento("testo-immagine");
+  const chipCategorie = document.querySelectorAll<HTMLElement>("[data-categoria]");
+  const iconeCategorie = [...document.querySelectorAll<HTMLElement>("[data-icona-categoria]")];
+
+  const idEsistenti: Record<string, string> = JSON.parse(modulo.dataset.idEsistenti ?? "{}");
+  const TESTO_IMMAGINE = testoImmagine.textContent ?? "";
+
+  // Stato
+  let immagine = ""; // base64 dell'immagine convertita
+  let idManuale = false; // true quando l'id è stato scritto a mano
+
+  const voceCorrente = () => leggiVoce(new FormData(modulo), immagine);
+
+  // ----- Aggiornamento -----
+
+  function aggiorna() {
+    if (!idManuale) campoId.value = idAutomatico(voceCorrente());
+    const voce = voceCorrente();
+
+    chipCategorie.forEach((chip) => chip.setAttribute("aria-pressed", String(chip.dataset.categoria === voce.categoria)));
+    aggiornaAnteprima(voce);
+    aggiornaStato(controlla(voce, idEsistenti));
+    elemento("yaml").textContent = creaYaml(voce, { abbreviaImmagine: true });
+    elemento("nota-yaml").hidden = !voce.immagine;
+  }
+
+  function aggiornaAnteprima(voce: Voce) {
+    elemento("anteprima-media").hidden = !voce.immagine;
+    elemento("anteprima-quantita").textContent = `QT. ${voce.quantità}`;
+    elemento("anteprima-categoria").textContent = voce.categoria || "Categoria";
+    elemento("anteprima-nome").textContent = voce.nome || "Nome dell'articolo";
+    elemento("anteprima-autore").textContent = [voce.publisher || "Publisher", voce.artista].filter(Boolean).join(" - ");
+    elemento("anteprima-note").textContent = voce.note;
+    elemento("anteprima-priorita").textContent = `Priorità: ${voce.priorità}/5`;
+    elemento("anteprima-prezzo").textContent = voce.prezzo ? `${voce.prezzo}${voce.valuta}` : "N/A";
+
+    // Icona della categoria, o il cartellino per le categorie nuove
+    const icona =
+      iconeCategorie.find((i) => i.dataset.iconaCategoria === voce.categoria) ??
+      iconeCategorie.find((i) => i.dataset.iconaCategoria === "");
+    iconeCategorie.forEach((i) => (i.hidden = i !== icona));
+
+    const link = elemento<HTMLAnchorElement>("anteprima-link");
+    const valido = linkValido(voce.link);
+    if (valido) link.href = voce.link;
+    else link.removeAttribute("href");
+    link.toggleAttribute("data-disabled", !valido);
+  }
+
+  function aggiornaStato(problemi: string[]) {
+    const pronta = problemi.length === 0;
+    const righe = pronta ? ["Voce pronta: copiala in fondo al file della wishlist."] : problemi;
+
+    elemento("stato").dataset.stato = pronta ? "pronta" : "errore";
+    elemento("problemi").replaceChildren(
+      ...righe.map((testo) => Object.assign(document.createElement("li"), { textContent: testo })),
+    );
+    elemento<HTMLButtonElement>("copia").disabled = !pronta;
+  }
+
+  // ----- Immagine -----
+
+  function mostraStatoImmagine(stato: "vuota" | "attesa" | "pronta" | "errore", testo: string) {
+    elemento("info-immagine").dataset.stato = stato;
+    testoImmagine.textContent = testo;
+  }
+
+  function impostaImmagine(convertita: ImmagineConvertita | null) {
+    immagine = convertita?.base64 ?? "";
+    for (const img of [elemento<HTMLImageElement>("miniatura"), elemento<HTMLImageElement>("anteprima-img")]) {
+      if (convertita) img.src = convertita.dataUrl;
+      else img.removeAttribute("src");
+    }
+    elemento("miniatura").hidden = !convertita;
+    elemento("rimuovi-immagine").hidden = !convertita;
+    if (!convertita) mostraStatoImmagine("vuota", TESTO_IMMAGINE);
+  }
+
+  async function caricaImmagine(origine: Blob | string) {
+    mostraStatoImmagine("attesa", "Conversione in corso…");
+    try {
+      const file = typeof origine === "string" ? await scaricaImmagine(origine) : origine;
+      const convertita = await convertiImmagine(file);
+      const kb = (convertita.base64.length / 1024).toLocaleString("it-IT", { maximumFractionDigits: 1 });
+      impostaImmagine(convertita);
+      mostraStatoImmagine("pronta", `${convertita.descrizione} · ${kb} KB in base64`);
+    } catch (errore) {
+      mostraStatoImmagine("errore", (errore as Error).message);
+    }
+    aggiorna();
+  }
+
+  const inUnCampo = (target: EventTarget | null) => target instanceof Element && target.closest("input, textarea") !== null;
+
+  // ----- Eventi -----
+
+  modulo.addEventListener("input", aggiorna);
+
+  // Scrivere nell'id lo rende manuale; svuotarlo o premere "Auto" torna alla generazione automatica
+  campoId.addEventListener("input", () => (idManuale = campoId.value.trim() !== ""));
+  elemento("id-automatico").addEventListener("click", () => {
+    idManuale = false;
+    aggiorna();
+  });
+
+  chipCategorie.forEach((chip) =>
+    chip.addEventListener("click", () => {
+      campoCategoria.value = chip.dataset.categoria ?? "";
+      aggiorna();
+    }),
+  );
+
+  elemento("meno").addEventListener("click", () => {
+    campoQuantità.stepDown();
+    aggiorna();
+  });
+  elemento("piu").addEventListener("click", () => {
+    campoQuantità.stepUp();
+    aggiorna();
+  });
+
+  elemento("copia").addEventListener("click", async () => {
+    const bottone = elemento("copia");
+    await navigator.clipboard.writeText(creaYaml(voceCorrente()));
+    bottone.toggleAttribute("data-copiato", true);
+    setTimeout(() => bottone.removeAttribute("data-copiato"), 1500);
+  });
+
+  elemento("nuova").addEventListener("click", () => {
+    modulo.reset();
+    idManuale = false;
+    impostaImmagine(null);
+    aggiorna();
+    elemento("nome").focus();
+  });
+
+  elemento("scegli-file").addEventListener("click", () => sceltaFile.click());
+  sceltaFile.addEventListener("change", () => {
+    const [file] = sceltaFile.files ?? [];
+    if (file) caricaImmagine(file);
+    sceltaFile.value = "";
+  });
+  elemento("rimuovi-immagine").addEventListener("click", () => {
+    impostaImmagine(null);
+    aggiorna();
+  });
+
+  // Ctrl+V: un'immagine copiata, oppure il suo indirizzo se incollato fuori dai campi di testo
+  document.addEventListener("paste", (e) => {
+    const file = [...(e.clipboardData?.files ?? [])].find((f) => f.type.startsWith("image/"));
+    const testo = e.clipboardData?.getData("text").trim() ?? "";
+    if (file) caricaImmagine(file);
+    else if (!inUnCampo(e.target) && /^https?:\/\//.test(testo)) caricaImmagine(testo);
+    else return;
+    e.preventDefault();
+  });
+
+  // Trascinamento: un file vale ovunque nella pagina, così non la si chiude per sbaglio
+  document.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    zonaImmagine.toggleAttribute("data-trascina", zonaImmagine.contains(e.target as Node));
+  });
+  document.addEventListener("dragleave", (e) => {
+    if (!e.relatedTarget) zonaImmagine.removeAttribute("data-trascina");
+  });
+  document.addEventListener("drop", (e) => {
+    zonaImmagine.removeAttribute("data-trascina");
+    const [file] = e.dataTransfer?.files ?? [];
+    const url = e.dataTransfer?.getData("text/uri-list").split(/\r?\n/).find((riga) => riga && !riga.startsWith("#"));
+    if (file) caricaImmagine(file);
+    else if (url && !inUnCampo(e.target)) caricaImmagine(url);
+    else return; // testo trascinato in un campo: comportamento normale
+    e.preventDefault();
+  });
+
+  aggiorna();
+</script>

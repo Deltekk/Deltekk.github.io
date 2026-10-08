@@ -1,0 +1,48 @@
+---
+// Bottone per passare dal tema chiaro a quello scuro; la scelta resta salvata nel browser.
+// Il tema iniziale lo applica lo script in Layout.astro, prima che la pagina venga disegnata.
+// Con `etichetta` mostra anche il testo (nel pannello del menu mobile), altrimenti solo l'icona.
+import { Button } from "@/components/starwind/button";
+import Moon from "@tabler/icons/outline/moon.svg";
+import Sun from "@tabler/icons/outline/sun.svg";
+
+interface Props {
+  etichetta?: boolean;
+  class?: string;
+}
+
+const { etichetta = false, class: className } = Astro.props;
+---
+
+<Button
+  data-scelta-tema
+  variant={etichetta ? "outline" : "ghost"}
+  size={etichetta ? "md" : "icon-sm"}
+  aria-label={etichetta ? undefined : "Cambia tema (chiaro o scuro)"}
+  title="Cambia tema"
+  class={className}
+>
+  <Moon class="dark:hidden" />
+  <Sun class="hidden dark:block" />
+  {
+    etichetta && (
+      <>
+        <span class="dark:hidden">Passa al tema scuro</span>
+        <span class="hidden dark:inline">Passa al tema chiaro</span>
+      </>
+    )
+  }
+</Button>
+
+<script>
+  document.querySelectorAll("[data-scelta-tema]").forEach((bottone) =>
+    bottone.addEventListener("click", () => {
+      const scuro = document.documentElement.classList.toggle("dark");
+      try {
+        localStorage.setItem("tema", scuro ? "scuro" : "chiaro");
+      } catch {
+        // Senza localStorage (es. alcune navigazioni private) la scelta vale solo per questa pagina
+      }
+    }),
+  );
+</script>

@@ -1,0 +1,20 @@
+---
+// Campo del modulo DWEG: etichetta con icona (slot "icona") sopra il controllo (slot predefinito)
+interface Props {
+  etichetta: string;
+  per?: string; // id del controllo a cui collegare l'etichetta
+  obbligatorio?: boolean;
+  class?: string;
+}
+
+const { etichetta, per, obbligatorio = false, class: className } = Astro.props;
+---
+
+<div class:list={["flex min-w-0 flex-col gap-2", className]}>
+  <label for={per} class="flex items-center gap-2 text-sm font-medium">
+    <span class="text-primary-accent flex [&>svg]:size-4"><slot name="icona" /></span>
+    {etichetta}
+    {obbligatorio && <span class="text-error">*</span>}
+  </label>
+  <slot />
+</div>

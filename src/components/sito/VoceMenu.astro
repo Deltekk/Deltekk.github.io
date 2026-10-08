@@ -1,0 +1,26 @@
+---
+// Link a una pagina del menu (header e pannello mobile), evidenziato se è la pagina corrente
+import { Button } from "@/components/starwind/button";
+import { stessoPercorso, type Pagina } from "@/data/sito";
+
+interface Props {
+  pagina: Pagina;
+  size?: "sm" | "md";
+  class?: string;
+}
+
+const { pagina, size = "sm", class: className } = Astro.props;
+const { percorso, menu, icona: Icona } = pagina;
+const attiva = stessoPercorso(percorso, Astro.url.pathname);
+---
+
+<Button
+  href={percorso}
+  variant="ghost"
+  size={size}
+  aria-current={attiva ? "page" : undefined}
+  class:list={["aria-[current=page]:bg-accent aria-[current=page]:text-accent-foreground", className]}
+>
+  <Icona />
+  {menu}
+</Button>

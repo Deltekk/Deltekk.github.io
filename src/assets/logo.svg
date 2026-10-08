@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" color="#5B24F1">
+  <!-- Logo di susino.dev: una prugna. Il frutto usa currentColor: nell'header prende il colore
+       primario del tema (classe text-primary), come favicon il valore di "color" qui sopra. -->
+  <path d="M32 17C40 11 57 14 57.5 33.5C58 50 46 61 32 61C18 61 6 50 6.5 33.5C7 14 24 11 32 17Z" fill="currentColor" />
+  <path d="M32 18.5C27 28 26.5 46 30.5 59" stroke="#000" stroke-opacity=".22" stroke-width="2.5" stroke-linecap="round" />
+  <ellipse cx="19" cy="31" rx="3.6" ry="7.5" transform="rotate(22 19 31)" fill="#fff" fill-opacity=".35" />
+  <path d="M32 18C32 12 33.5 8 37 4.5" stroke="#52525B" stroke-width="3.2" stroke-linecap="round" />
+  <path d="M35.5 11C38.5 3.5 48 1 56 4C52 12 43.5 15 35.5 11Z" fill="#10B981" />
+  <path d="M37.5 10.2C42 7.5 47 5.8 52 5.2" stroke="#047857" stroke-width="1.4" stroke-linecap="round" />
+</svg>

@@ -1,0 +1,57 @@
+---
+// Header comune: logo e nome del sito, poi il menu con le pagine di src/data/sito.ts.
+// Da md in su il menu e la scelta del tema sono nella barra; sotto md c'è l'hamburger,
+// che apre un pannello da destra (Sheet di Starwind) con le stesse voci.
+import { Button } from "@/components/starwind/button";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/starwind/sheet";
+import SceltaTema from "@/components/sito/SceltaTema.astro";
+import VoceMenu from "@/components/sito/VoceMenu.astro";
+import Logo from "@/assets/logo.svg";
+import { PAGINE, SITO } from "@/data/sito";
+import Menu from "@tabler/icons/outline/menu-2.svg";
+---
+
+<header class="bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
+  <div class="mx-auto flex h-16 max-w-6xl items-center gap-1 px-4 sm:px-6">
+    <a href="/" class="mr-auto flex items-center gap-2 text-lg font-bold tracking-tight">
+      <Logo class="text-primary size-8" aria-hidden="true" />
+      {SITO.nome}
+    </a>
+
+    <!-- Da md in su: menu in linea e scelta del tema -->
+    <nav aria-label="Pagine del sito" class="hidden items-center gap-1 md:flex">
+      {PAGINE.map((pagina) => <VoceMenu pagina={pagina} />)}
+    </nav>
+    <SceltaTema class="hidden md:inline-flex" />
+
+    <!-- Sotto md: l'hamburger apre il pannello #menu-mobile qui sotto -->
+    <SheetTrigger asChild targetId="menu-mobile" class="md:hidden">
+      <Button variant="ghost" size="icon" aria-label="Apri il menu">
+        <Menu />
+      </Button>
+    </SheetTrigger>
+  </div>
+</header>
+
+<!-- Il pannello sta fuori dall'header: il backdrop-blur dell'header farebbe da riferimento
+     agli elementi "fixed" e lo sfondo scuro coprirebbe solo l'header invece della pagina -->
+<Sheet id="menu-mobile">
+  <SheetContent side="right">
+    <SheetHeader>
+      <SheetTitle>
+        <a href="/" class="flex items-center gap-2 text-lg font-bold tracking-tight">
+          <Logo class="text-primary size-7" aria-hidden="true" />
+          {SITO.nome}
+        </a>
+      </SheetTitle>
+    </SheetHeader>
+
+    <nav aria-label="Pagine del sito" class="flex flex-col gap-1 px-4">
+      {PAGINE.map((pagina) => <VoceMenu pagina={pagina} size="md" class="justify-start" />)}
+    </nav>
+
+    <SheetFooter class="border-t">
+      <SceltaTema etichetta />
+    </SheetFooter>
+  </SheetContent>
+</Sheet>

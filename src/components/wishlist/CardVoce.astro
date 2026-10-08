@@ -1,0 +1,64 @@
+---
+// Card di una voce della wishlist. Tutta la card è cliccabile: il bottone "Vedi" si estende
+// sull'intera card con un pseudo-elemento ::after.
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/starwind/card";
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import { iconaCategoria } from "@/lib/categorie";
+import type { VoceWishlist } from "@/lib/wishlist";
+import ExternalLink from "@tabler/icons/outline/external-link.svg";
+import Stack from "@tabler/icons/outline/stack-2.svg";
+import Star from "@tabler/icons/outline/star.svg";
+
+interface Props {
+  voce: VoceWishlist;
+}
+
+const { data } = Astro.props.voce;
+const Icona = iconaCategoria(data.categoria);
+---
+
+<Card class="relative h-full transition-all duration-100 hover:z-10 hover:scale-105">
+  {
+    data.immagine && (
+      <>
+        {/* L'immagine va per prima: così la Card toglie il margine sopra e arrotonda gli angoli */}
+        <img
+          src={`data:image/jpeg;base64,${data.immagine}`}
+          alt={data.nome}
+          loading="lazy"
+          class="aspect-square w-full object-cover"
+        />
+        <Badge tone="primary-accent" appearance="frosted" size="lg" class="absolute top-0 left-0 mt-2 ml-2">
+          <Stack /> QT. {data.quantità}
+        </Badge>
+        <Badge tone="primary-accent" appearance="frosted" size="lg" class="absolute top-0 right-0 mt-2 mr-2">
+          <Icona /> {data.categoria}
+        </Badge>
+      </>
+    )
+  }
+
+  <CardHeader>
+    <CardTitle>{data.nome}</CardTitle>
+    <CardDescription class="flex flex-row justify-center text-center">
+      <p>{data.publisher}{data.artista && ` - ${data.artista}`}</p>
+    </CardDescription>
+  </CardHeader>
+
+  <CardContent class="h-full">
+    {data.note && <p>{data.note}</p>}
+  </CardContent>
+
+  <CardFooter class="flex flex-col">
+    <div class="flex w-full flex-row justify-between">
+      <span class="flex flex-row items-center justify-center gap-5 py-5 align-middle">
+        <Star /> Priorità: {data.priorità}/5
+      </span>
+      <p class="my-4 text-2xl font-semibold">{data.prezzo ? `${data.prezzo}${data.valuta}` : "N/A"}</p>
+    </div>
+    <Button href={data.link} target="_blank" rel="noopener" variant="primary" size="lg" class="static w-full after:absolute after:inset-0 after:z-10">
+      Vedi <ExternalLink />
+    </Button>
+  </CardFooter>
+</Card>

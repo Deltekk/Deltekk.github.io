@@ -3,6 +3,33 @@
 @plugin "@tailwindcss/forms";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ----- PALETTE DEL SITO -----
+   Primario: il viola del marchio #5B24F1, in OKLCH 0.494 0.269 282.6.
+   La scala "viola" ha la stessa progressione di luminosità e croma del violet di Tailwind,
+   ma con la tinta del marchio; il 700 è esattamente il marchio.
+   Per cambiare colore: aggiorna --tinta-viola e il valore del 700.
+
+   Le altre palette sono quelle di Tailwind, scelte per stare bene col viola:
+   - zinc per sfondi, testi e bordi (ha quasi la stessa tinta, circa 286°);
+   - fuchsia come accento secondario (tinta vicina, per sfumature e dettagli);
+   - emerald, amber, rose e sky per gli stati (successo, avviso, errore, informazione).
+
+   I componenti non usano queste scale direttamente, ma i token qui sotto (primary, muted, ...). */
+@theme {
+  --tinta-viola: 282.6;
+  --color-viola-50: oklch(0.969 0.016 var(--tinta-viola));
+  --color-viola-100: oklch(0.943 0.029 var(--tinta-viola));
+  --color-viola-200: oklch(0.894 0.057 var(--tinta-viola));
+  --color-viola-300: oklch(0.811 0.111 var(--tinta-viola));
+  --color-viola-400: oklch(0.702 0.183 var(--tinta-viola));
+  --color-viola-500: oklch(0.606 0.25 var(--tinta-viola));
+  --color-viola-600: oklch(0.541 0.281 var(--tinta-viola));
+  --color-viola-700: #5b24f1;
+  --color-viola-800: oklch(0.432 0.232 var(--tinta-viola));
+  --color-viola-900: oklch(0.38 0.189 var(--tinta-viola));
+  --color-viola-950: oklch(0.283 0.141 var(--tinta-viola));
+}
+
 @theme {
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -73,85 +100,88 @@
   --color-sidebar-outline: var(--sidebar-outline);
 }
 
+/* Tema chiaro. I colori di stato (success, error, ...) sono abbastanza scuri da usarli
+   anche come colore del testo (es. text-error), e come sfondo col rispettivo -foreground. */
 :root {
-  --background: var(--color-white);
-  --foreground: var(--color-neutral-950);
+  --background: var(--color-zinc-50);
+  --foreground: var(--color-zinc-950);
   --card: var(--color-white);
-  --card-foreground: var(--color-neutral-950);
+  --card-foreground: var(--color-zinc-950);
   --popover: var(--color-white);
-  --popover-foreground: var(--color-neutral-950);
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-neutral-50);
-  --primary-accent: var(--color-blue-700);
-  --secondary: var(--color-neutral-200);
-  --secondary-foreground: var(--color-neutral-950);
-  --secondary-accent: var(--color-neutral-950);
-  --muted: var(--color-neutral-100);
-  --muted-foreground: var(--color-neutral-600);
-  --accent: var(--color-neutral-100);
-  --accent-foreground: var(--color-neutral-900);
-  --info: var(--color-sky-300);
-  --info-foreground: var(--color-sky-950);
-  --success: var(--color-green-300);
-  --success-foreground: var(--color-green-950);
-  --warning: var(--color-amber-300);
+  --popover-foreground: var(--color-zinc-950);
+  --primary: var(--color-viola-700);
+  --primary-foreground: var(--color-white);
+  --primary-accent: var(--color-viola-600);
+  --secondary: var(--color-zinc-200);
+  --secondary-foreground: var(--color-zinc-950);
+  --secondary-accent: var(--color-fuchsia-600);
+  --muted: var(--color-zinc-100);
+  --muted-foreground: var(--color-zinc-600);
+  --accent: var(--color-viola-50);
+  --accent-foreground: var(--color-viola-950);
+  --info: var(--color-sky-600);
+  --info-foreground: var(--color-white);
+  --success: var(--color-emerald-600);
+  --success-foreground: var(--color-white);
+  --warning: var(--color-amber-400);
   --warning-foreground: var(--color-amber-950);
-  --error: var(--color-red-700);
-  --error-foreground: var(--color-neutral-50);
-  --border: var(--color-neutral-200);
-  --input: var(--color-neutral-200);
-  --outline: var(--color-neutral-400);
+  --error: var(--color-rose-600);
+  --error-foreground: var(--color-white);
+  --border: var(--color-zinc-200);
+  --input: var(--color-zinc-200);
+  --outline: var(--color-viola-500);
   --radius: 0.625rem;
 
   /* sidebar variables */
-  --sidebar-background: var(--color-neutral-50);
-  --sidebar-foreground: var(--color-neutral-950);
-  --sidebar-primary: var(--color-blue-700);
-  --sidebar-primary-foreground: var(--color-neutral-50);
-  --sidebar-accent: var(--color-neutral-100);
-  --sidebar-accent-foreground: var(--color-neutral-900);
-  --sidebar-border: var(--color-neutral-200);
-  --sidebar-outline: var(--color-neutral-400);
+  --sidebar-background: var(--color-zinc-50);
+  --sidebar-foreground: var(--color-zinc-950);
+  --sidebar-primary: var(--color-viola-700);
+  --sidebar-primary-foreground: var(--color-white);
+  --sidebar-accent: var(--color-viola-50);
+  --sidebar-accent-foreground: var(--color-viola-950);
+  --sidebar-border: var(--color-zinc-200);
+  --sidebar-outline: var(--color-viola-500);
 }
 
+/* Tema scuro: stessi ruoli, tonalità più chiare per i testi colorati */
 .dark {
-  --background: var(--color-neutral-950);
-  --foreground: var(--color-neutral-50);
-  --card: var(--color-neutral-900);
-  --card-foreground: var(--color-neutral-50);
-  --popover: var(--color-neutral-900);
-  --popover-foreground: var(--color-neutral-50);
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-neutral-50);
-  --primary-accent: var(--color-blue-400);
-  --secondary: var(--color-neutral-800);
-  --secondary-foreground: var(--color-neutral-50);
-  --secondary-accent: var(--color-neutral-50);
-  --muted: var(--color-neutral-800);
-  --muted-foreground: var(--color-neutral-400);
-  --accent: var(--color-neutral-700);
-  --accent-foreground: var(--color-neutral-50);
-  --info: var(--color-sky-300);
+  --background: var(--color-zinc-950);
+  --foreground: var(--color-zinc-50);
+  --card: var(--color-zinc-900);
+  --card-foreground: var(--color-zinc-50);
+  --popover: var(--color-zinc-900);
+  --popover-foreground: var(--color-zinc-50);
+  --primary: var(--color-viola-600);
+  --primary-foreground: var(--color-white);
+  --primary-accent: var(--color-viola-400);
+  --secondary: var(--color-zinc-800);
+  --secondary-foreground: var(--color-zinc-50);
+  --secondary-accent: var(--color-fuchsia-400);
+  --muted: var(--color-zinc-800);
+  --muted-foreground: var(--color-zinc-400);
+  --accent: var(--color-viola-950);
+  --accent-foreground: var(--color-viola-100);
+  --info: var(--color-sky-400);
   --info-foreground: var(--color-sky-950);
-  --success: var(--color-green-300);
-  --success-foreground: var(--color-green-950);
-  --warning: var(--color-amber-300);
+  --success: var(--color-emerald-400);
+  --success-foreground: var(--color-emerald-950);
+  --warning: var(--color-amber-400);
   --warning-foreground: var(--color-amber-950);
-  --error: var(--color-red-800);
-  --error-foreground: var(--color-neutral-50);
-  --border: --alpha(var(--color-neutral-50) / 10%);
-  --input: --alpha(var(--color-neutral-50) / 15%);
-  --outline: var(--color-neutral-500);
+  --error: var(--color-rose-400);
+  --error-foreground: var(--color-rose-950);
+  --border: --alpha(var(--color-zinc-50) / 10%);
+  --input: --alpha(var(--color-zinc-50) / 15%);
+  --outline: var(--color-viola-400);
 
   /* sidebars variables */
-  --sidebar-background: var(--color-neutral-900);
-  --sidebar-foreground: var(--color-neutral-50);
-  --sidebar-primary: var(--color-blue-700);
-  --sidebar-primary-foreground: var(--color-neutral-50);
-  --sidebar-accent: var(--color-neutral-800);
-  --sidebar-accent-foreground: var(--color-neutral-100);
-  --sidebar-border: var(--color-neutral-800);
-  --sidebar-outline: var(--color-neutral-600);
+  --sidebar-background: var(--color-zinc-900);
+  --sidebar-foreground: var(--color-zinc-50);
+  --sidebar-primary: var(--color-viola-600);
+  --sidebar-primary-foreground: var(--color-white);
+  --sidebar-accent: var(--color-viola-950);
+  --sidebar-accent-foreground: var(--color-viola-100);
+  --sidebar-border: var(--color-zinc-800);
+  --sidebar-outline: var(--color-viola-400);
 }
 
 @layer base {
