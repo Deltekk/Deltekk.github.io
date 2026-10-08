@@ -1,0 +1,33 @@
+---
+// src/pages/wishlist.astro
+// Wishlist di Daniele: dati in src/data/wishlist.yaml, layout comune in components/wishlist/Wishlist.astro
+import Layout from "@/layouts/Layout.astro";
+import Wishlist from "@/components/wishlist/Wishlist.astro";
+import Disclaimer from "@/components/wishlist/Disclaimer.astro";
+---
+
+<Layout>
+  <Wishlist collezione="wishlist" titolo="Wishlist Daniele">
+    <Disclaimer titolo="Vinili">
+      È possibile che si riescano a trovare degli ottimi deal nel <b class="font-bold">mercato dell'usato per i vinili</b>,
+      l'importante è che <b class="font-bold">non ci siano danni evidenti e possibilmente</b> se vedete il vinile
+      <i class="font-bold">"incelofanato"</i> vuol dire che in generale se ne sono presi cura. Ancora meglio se sono stati
+      graddati (mint, near mint)
+    </Disclaimer>
+
+    <Disclaimer titolo="Videogiochi">
+      Da un po' di tempo ho preso la decisione di non comprare più giochi su steam, preferendo store alternativi come
+      <a href="https://gog.com" target="_blank" class="font-bold">GOG</a> o
+      <a href="https://itch.io" target="_blank" class="font-bold">Itch.io</a>, per avere una copia DRM-Free. Per questo,
+      <b>NON REGALATEMI GIOCHI SU STEAM</b>, grazie. Se non siete sicuri se un gioco sia disponibile o meno su gog o itch,
+      controllate sul sito <a href="https://pcgamingwiki.com" target="_blank" class="font-bold">PCGamingWiki</a>.
+    </Disclaimer>
+
+    <Disclaimer titolo="Libri">
+      Per quanto riguarda prodotti letterari, vi prego di assicurarvi che la casa editrice non abbia promosso copertine
+      generate da AI, vedesi ad esempio <a href="https://amzn.eu/d/0g25ZyuU" target="_blank">questo scempio</a>.
+      La <i class="font-black">"Crescere Edizioni"</i> è nota per usare copertine AI, quindi
+      <i class="font-black">evitatela come la peste bubbonica!!!</i>
+    </Disclaimer>
+  </Wishlist>
+</Layout>
