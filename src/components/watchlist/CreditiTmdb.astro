@@ -1,0 +1,21 @@
+---
+// Attribuzione richiesta dai termini d'uso di TMDB (https://www.themoviedb.org/api-terms-of-use):
+// un logo approvato, meno in evidenza del logo del sito, e la dichiarazione di non affiliazione.
+// Il logo è "blue_short" da https://www.themoviedb.org/about/logos-attribution, non va modificato.
+import logoTmdb from "@/assets/tmdb.svg";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<p class:list={["text-muted-foreground flex flex-col items-center gap-3 text-center text-xs sm:flex-row", className]}>
+  <a href="https://www.themoviedb.org" target="_blank" rel="noopener" class="shrink-0">
+    <img src={logoTmdb.src} alt="TMDB" width="92" height="12" class="h-3 w-auto" />
+  </a>
+  <span>
+    Dati e locandine da TMDB. Questo sito usa l'API di TMDB ma non è approvato né certificato da TMDB.
+  </span>
+</p>

@@ -6,7 +6,9 @@
 // con lo stesso percorso. Il resto (menu, home, metadati) si aggiorna da solo.
 import type { SvgComponent } from "astro/types";
 import Code from "@tabler/icons/outline/code.svg";
+import DeviceTv from "@tabler/icons/outline/device-tv.svg";
 import FileCode from "@tabler/icons/outline/file-code.svg";
+import Movie from "@tabler/icons/outline/movie.svg";
 import Gift from "@tabler/icons/outline/gift.svg";
 import GiftCard from "@tabler/icons/outline/gift-card.svg";
 import Heart from "@tabler/icons/outline/heart.svg";
@@ -50,6 +52,14 @@ export const PAGINE: Pagina[] = [
     gruppo: "Progetti",
   },
   {
+    percorso: "/DMEG",
+    titolo: "DMEG · Deltek Media Entry Generator",
+    menu: "DMEG",
+    descrizione: "Genera le voci YAML della watchlist: cerchi un film o una serie su TMDB e copi il risultato.",
+    icona: Movie,
+    gruppo: "Progetti",
+  },
+  {
     percorso: "/wishlist",
     titolo: "Wishlist Daniele",
     menu: "Wishlist",
@@ -63,6 +73,14 @@ export const PAGINE: Pagina[] = [
     menu: "Wishlist Giovy",
     descrizione: "Idee regalo per Giovanni, in ordine di priorità.",
     icona: GiftCard,
+    gruppo: "Personale",
+  },
+  {
+    percorso: "/watchlist",
+    titolo: "Watchlist",
+    menu: "Watchlist",
+    descrizione: "Film e serie TV: quelli da vedere, quelli in corso e quelli già visti.",
+    icona: DeviceTv,
     gruppo: "Personale",
   },
 ];

@@ -1,0 +1,24 @@
+---
+// Un'opzione di un gruppo di radio con l'aspetto di un bottone Starwind, evidenziata quando è scelta.
+// Essendo un vero radio, il valore arriva in FormData e form.reset() torna alla scelta iniziale.
+import { button } from "@/components/starwind/button/variants";
+
+interface Props {
+  nome: string;
+  valore: string | number;
+  scelta?: boolean; // scelta iniziale
+  titolo?: string; // suggerimento al passaggio del mouse, utile se il contenuto è solo un'icona
+}
+
+const { nome, valore, scelta = false, titolo } = Astro.props;
+const stile = button({
+  variant: "outline",
+  class:
+    "cursor-pointer has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:ring-3 has-focus-visible:ring-outline/50",
+});
+---
+
+<label class={stile} title={titolo}>
+  <input type="radio" name={nome} value={valore} checked={scelta} class="sr-only" />
+  <slot />
+</label>

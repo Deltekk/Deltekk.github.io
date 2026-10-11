@@ -1,11 +1,11 @@
-// Accesso alle wishlist: ognuna è una collection definita in src/content.config.ts
+// Accesso alle wishlist: ognuna è una collection elencata in WISHLIST in src/content.config.ts
 import { getCollection, type CollectionEntry } from "astro:content";
-import { collections } from "@/content.config";
+import { WISHLIST } from "@/content.config";
 
-export type NomeWishlist = keyof typeof collections;
+export type NomeWishlist = keyof typeof WISHLIST;
 export type VoceWishlist = CollectionEntry<NomeWishlist>;
 
-export const NOMI_WISHLIST = Object.keys(collections) as NomeWishlist[];
+export const NOMI_WISHLIST = Object.keys(WISHLIST) as NomeWishlist[];
 
 // Voci ordinate per priorità (1 = la più desiderata) e poi per nome
 export async function leggiWishlist(nome: NomeWishlist): Promise<VoceWishlist[]> {

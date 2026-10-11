@@ -1,0 +1,41 @@
+---
+// Una riga di bottoni per filtrare le voci di un Catalogo, più il bottone "tutti" già attivo.
+// `nome` è il gruppo: una voce passa il filtro se il valore scelto è tra quelli nel suo data-<nome>.
+import type { SvgComponent } from "astro/types";
+import { Button } from "@/components/starwind/button";
+import LayoutGrid from "@tabler/icons/outline/layout-grid.svg";
+
+interface Opzione {
+  valore: string;
+  etichetta: string;
+  icona?: SvgComponent;
+}
+
+interface Props {
+  nome: string;
+  opzioni: Opzione[];
+  tutti: string; // etichetta del bottone senza filtro, es. "Tutte"
+  etichetta?: string; // titolo della riga, es. "Genere"
+}
+
+const { nome, opzioni, tutti, etichetta } = Astro.props;
+---
+
+<div role="group" aria-label={etichetta ?? nome} class="flex flex-wrap items-center gap-2">
+  {etichetta && <span class="text-muted-foreground mr-1 text-sm font-medium">{etichetta}</span>}
+  {
+    [{ valore: "", etichetta: tutti, icona: LayoutGrid }, ...opzioni].map(({ valore, etichetta, icona: Icona }) => (
+      <Button
+        variant="outline"
+        size="sm"
+        data-filtro={nome}
+        data-valore={valore}
+        aria-pressed={String(valore === "")}
+        class="aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+      >
+        {Icona && <Icona />}
+        {etichetta}
+      </Button>
+    ))
+  }
+</div>

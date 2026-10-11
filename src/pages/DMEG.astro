@@ -1,0 +1,624 @@
+---
+// src/pages/DMEG.astro
+// DMEG - Deltek Media Entry Generator: cerca un film o una serie su TMDB, completa i campi
+// personali e copia la voce YAML da incollare in src/data/watchlist.yaml.
+// TMDB serve solo qui, per costruire la voce: la watchlist poi usa solo il file YAML.
+// Se il titolo è già in watchlist, i campi personali (stato, stagioni viste, voto, note) restano quelli.
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/starwind/card";
+import { Input } from "@/components/starwind/input";
+import { Textarea } from "@/components/starwind/textarea";
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/starwind/input-group";
+import AzioniVoce from "@/components/generatore/AzioniVoce.astro";
+import Campo from "@/components/generatore/Campo.astro";
+import PannelloYaml from "@/components/generatore/PannelloYaml.astro";
+import Scelta from "@/components/generatore/Scelta.astro";
+import CreditiTmdb from "@/components/watchlist/CreditiTmdb.astro";
+import { STATI, TIPI } from "@/lib/watchlist";
+import type { Esistente } from "@/scripts/dmeg/titolo";
+
+// ----- ICONE ------
+
+import AlertTriangle from "@tabler/icons/outline/alert-triangle.svg";
+import BrandYoutube from "@tabler/icons/outline/brand-youtube.svg";
+import Calendar from "@tabler/icons/outline/calendar.svg";
+import CircleCheck from "@tabler/icons/outline/circle-check.svg";
+import Eye from "@tabler/icons/outline/eye.svg";
+import Hash from "@tabler/icons/outline/hash.svg";
+import Key from "@tabler/icons/outline/key.svg";
+import ListDetails from "@tabler/icons/outline/list-details.svg";
+import Loader from "@tabler/icons/outline/loader-2.svg";
+import Minus from "@tabler/icons/outline/minus.svg";
+import Movie from "@tabler/icons/outline/movie.svg";
+import Notes from "@tabler/icons/outline/notes.svg";
+import Photo from "@tabler/icons/outline/photo.svg";
+import Plus from "@tabler/icons/outline/plus.svg";
+import Progress from "@tabler/icons/outline/progress.svg";
+import Search from "@tabler/icons/outline/search.svg";
+import Signature from "@tabler/icons/outline/signature.svg";
+import Stack from "@tabler/icons/outline/stack-2.svg";
+import Star from "@tabler/icons/outline/star.svg";
+import StarPiena from "@tabler/icons/filled/star.svg";
+import Tags from "@tabler/icons/outline/tags.svg";
+import Users from "@tabler/icons/outline/users.svg";
+import Wand from "@tabler/icons/outline/wand.svg";
+import World from "@tabler/icons/outline/world.svg";
+
+// ----- TITOLI GIÀ IN WATCHLIST -----
+// Per id TMDB: servono a conservare i campi personali e a bloccare gli id duplicati
+
+const esistenti: Record<number, Esistente> = Object.fromEntries(
+  (await getCollection("watchlist")).map(({ id, data }) => [
+    data.tmdb,
+    { id, stato: data.stato, stagioniViste: data.stagioniViste ?? null, voto: data.voto ?? null, note: data.note ?? "" },
+  ]),
+);
+
+// ----- ----- -----
+---
+
+<Layout>
+  <section class="mx-auto max-w-6xl px-6 py-16">
+    <header class="mb-10 flex items-center gap-4">
+      <div class="bg-primary text-primary-foreground grid size-12 place-items-center rounded-xl">
+        <Movie class="size-7" />
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold tracking-wide">DMEG</h1>
+        <p class="text-muted-foreground">Deltek Media Entry Generator</p>
+      </div>
+    </header>
+
+    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div class="flex min-w-0 flex-col gap-6">
+        <!-- Chiave TMDB: salvata solo in questo browser -->
+        <Card id="chiave" data-stato="mancante" class="group">
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2"><Key class="text-primary-accent size-5" /> Chiave TMDB</CardTitle>
+            <CardDescription>
+              <span class="group-data-[stato=salvata]:hidden">
+                Serve per cercare su TMDB. Crea un account gratuito e copia il «token di accesso in lettura» da
+                <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener" class="text-primary-accent underline">
+                  themoviedb.org/settings/api</a
+                >. Resta salvata solo in questo browser.
+              </span>
+              <span class="hidden group-data-[stato=salvata]:inline">Chiave salvata in questo browser.</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent class="flex flex-col gap-3">
+            <div class="flex gap-2 group-data-[stato=salvata]:hidden">
+              <Input id="campo-chiave" type="password" placeholder="Token di accesso o chiave API" aria-label="Chiave TMDB" />
+              <Button id="salva-chiave" variant="primary">Salva</Button>
+            </div>
+            <Button id="cambia-chiave" variant="outline" class="hidden self-start group-data-[stato=salvata]:inline-flex">
+              <Key /> Cambia chiave
+            </Button>
+            <p id="messaggio-chiave" hidden class="text-error text-sm"></p>
+          </CardContent>
+        </Card>
+
+        <!-- Ricerca -->
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2"><Search class="text-primary-accent size-5" /> Cerca su TMDB</CardTitle>
+            <CardDescription>Scrivi il titolo di un film o di una serie, poi scegli tra i risultati.</CardDescription>
+          </CardHeader>
+          <CardContent class="flex flex-col gap-3">
+            <div class="relative">
+              <Search class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+              <Input id="ricerca" type="search" placeholder="Titolo del film o della serie" aria-label="Cerca su TMDB" class="pl-9" autofocus />
+            </div>
+            <p
+              id="stato-ricerca"
+              data-stato="vuota"
+              class="group text-muted-foreground data-[stato=errore]:text-error flex items-start gap-2 text-sm data-[stato=vuota]:hidden"
+            >
+              <Loader class="mt-0.5 hidden size-4 shrink-0 animate-spin group-data-[stato=attesa]:block" />
+              <CircleCheck class="mt-0.5 hidden size-4 shrink-0 group-data-[stato=pronta]:block" />
+              <AlertTriangle class="mt-0.5 hidden size-4 shrink-0 group-data-[stato=errore]:block" />
+              <span id="testo-ricerca"></span>
+            </p>
+            <div id="risultati" class="flex flex-col gap-1"></div>
+          </CardContent>
+        </Card>
+
+        <!-- Dettagli -->
+        <form id="dmeg" data-esistenti={JSON.stringify(esistenti)} autocomplete="off">
+          <Card>
+            <CardHeader>
+              <CardTitle class="flex items-center gap-2"><ListDetails class="text-primary-accent size-5" /> Dettagli</CardTitle>
+              <CardDescription>Si compilano scegliendo un risultato; puoi correggere tutto a mano.</CardDescription>
+            </CardHeader>
+            <CardContent class="grid gap-5 sm:grid-cols-2">
+              <input type="text" name="tmdb" hidden />
+
+              <Campo etichetta="Tipo" class="sm:col-span-2">
+                <Movie slot="icona" />
+                <div role="radiogroup" aria-label="Tipo" class="flex gap-1">
+                  {
+                    Object.entries(TIPI).map(([valore, { etichetta, icona: Icona }]) => (
+                      <Scelta nome="tipo" valore={valore} scelta={valore === "film"}>
+                        <Icona /> {etichetta}
+                      </Scelta>
+                    ))
+                  }
+                </div>
+              </Campo>
+
+              <Campo etichetta="Titolo" per="titolo" obbligatorio>
+                <Signature slot="icona" />
+                <Input id="titolo" name="titolo" placeholder="Titolo in italiano" />
+              </Campo>
+
+              <Campo etichetta="Titolo originale" per="titoloOriginale" obbligatorio>
+                <World slot="icona" />
+                <Input id="titoloOriginale" name="titoloOriginale" placeholder="Titolo nella lingua originale" />
+              </Campo>
+
+              <Campo etichetta="Generi" per="generi" class="sm:col-span-2">
+                <Tags slot="icona" />
+                <Input id="generi" name="generi" placeholder="Separati da virgola" />
+              </Campo>
+
+              <Campo etichetta="Anno di inizio" per="annoInizio">
+                <Calendar slot="icona" />
+                <Input id="annoInizio" name="annoInizio" type="number" placeholder="Anno di uscita" />
+              </Campo>
+
+              <Campo etichetta="Anno di fine" per="annoFine" data-solo-serie>
+                <Calendar slot="icona" />
+                <Input id="annoFine" name="annoFine" type="number" placeholder="Vuoto se in corso" />
+              </Campo>
+
+              <Campo etichetta="Stagioni" per="stagioni" data-solo-serie>
+                <Stack slot="icona" />
+                <Input id="stagioni" name="stagioni" type="number" min="1" placeholder="Numero di stagioni" />
+              </Campo>
+
+              <Campo etichetta="Stagioni viste" per="stagioniViste" data-solo-serie>
+                <Progress slot="icona" />
+                <InputGroup>
+                  <InputGroupAddon>
+                    <InputGroupButton id="meno" size="icon-sm" aria-label="Meno"><Minus /></InputGroupButton>
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id="stagioniViste"
+                    name="stagioniViste"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    class="text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton id="piu" size="icon-sm" aria-label="Più"><Plus /></InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+              </Campo>
+
+              <Campo etichetta="Stato" class="sm:col-span-2">
+                <Eye slot="icona" />
+                <div role="radiogroup" aria-label="Stato" class="flex flex-wrap gap-1">
+                  {
+                    Object.entries(STATI).map(([valore, { etichetta, icona: Icona }]) => (
+                      <Scelta nome="stato" valore={valore} scelta={valore === "daVedere"}>
+                        <Icona /> {etichetta}
+                      </Scelta>
+                    ))
+                  }
+                </div>
+              </Campo>
+
+              <Campo etichetta="Voto" class="sm:col-span-2">
+                <Star slot="icona" />
+                <div role="radiogroup" aria-label="Voto" class="flex flex-wrap gap-1">
+                  <Scelta nome="voto" valore="" scelta>Nessuno</Scelta>
+                  {
+                    [1, 2, 3, 4, 5].map((n) => (
+                      <Scelta nome="voto" valore={n}>
+                        {n}
+                      </Scelta>
+                    ))
+                  }
+                </div>
+              </Campo>
+
+              <Campo etichetta="Attori" per="attori" class="sm:col-span-2">
+                <Users slot="icona" />
+                <Textarea id="attori" name="attori" rows={5} placeholder="Uno per riga" />
+              </Campo>
+
+              <Campo etichetta="Trailer" per="trailer">
+                <BrandYoutube slot="icona" />
+                <Input id="trailer" name="trailer" type="url" placeholder="https://www.youtube.com/watch?v=…" />
+              </Campo>
+
+              <Campo etichetta="Locandina" per="locandina">
+                <Photo slot="icona" />
+                <Input id="locandina" name="locandina" type="url" placeholder="https://image.tmdb.org/…" />
+              </Campo>
+
+              <Campo etichetta="Note" per="note" class="sm:col-span-2">
+                <Notes slot="icona" />
+                <Textarea id="note" name="note" placeholder="Facoltative: chi l'ha consigliato, dove vederlo…" />
+              </Campo>
+
+              <Campo etichetta="Id" per="id" obbligatorio class="sm:col-span-2">
+                <Hash slot="icona" />
+                <InputGroup>
+                  <InputGroupInput id="id" name="id" spellcheck="false" placeholder="Si genera da tipo, titolo e anno" />
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton id="id-automatico" title="Torna all'id automatico"><Wand /> Auto</InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+                <p class="text-muted-foreground text-xs">Formato tipo-Titolo-anno. Puoi modificarlo a mano.</p>
+              </Campo>
+            </CardContent>
+          </Card>
+        </form>
+
+        <PannelloYaml />
+      </div>
+
+      <!-- Azioni e anteprima: le azioni stanno sopra perché la locandina rende la colonna più alta dello schermo -->
+      <aside class="flex flex-col gap-4 lg:sticky lg:top-22">
+        <AzioniVoce />
+
+        <p class="text-muted-foreground flex items-center gap-2 text-xs font-semibold tracking-wider uppercase">
+          <Eye class="size-4" /> Anteprima card
+        </p>
+
+        <!-- Come components/watchlist/CardTitolo.astro -->
+        <Card class="relative pt-0 text-center">
+          <img id="anteprima-locandina" alt="" hidden class="aspect-[2/3] w-full rounded-t-xl object-cover" />
+          <div id="anteprima-segnaposto" class="bg-muted text-muted-foreground grid aspect-[2/3] w-full place-items-center rounded-t-xl">
+            <Photo class="size-12" />
+          </div>
+          <Badge tone="primary-accent" appearance="frosted" size="md" class="absolute top-0 left-0 mt-2 ml-2">
+            {
+              Object.entries(TIPI).map(([valore, { etichetta, icona: Icona }]) => (
+                <span data-anteprima-tipo={valore} hidden class="flex items-center gap-1.5">
+                  <Icona /> {etichetta}
+                </span>
+              ))
+            }
+          </Badge>
+          {
+            Object.entries(STATI).map(([valore, { etichetta, icona: Icona, tono }]) => (
+              <Badge data-anteprima-stato={valore} hidden tone={tono} appearance="frosted" size="md" class="absolute top-0 right-0 mt-2 mr-2">
+                <Icona /> {etichetta}
+              </Badge>
+            ))
+          }
+
+          <CardHeader>
+            <CardTitle id="anteprima-titolo" />
+            <CardDescription id="anteprima-originale" class="italic" />
+            <CardDescription id="anteprima-anni" />
+          </CardHeader>
+          <CardContent class="flex flex-col gap-3">
+            <div id="anteprima-generi" class="flex flex-wrap justify-center gap-1"></div>
+            <p id="anteprima-attori" class="text-muted-foreground text-sm"></p>
+            <div id="anteprima-progresso" class="flex flex-col gap-1 text-sm">
+              <div class="flex justify-between"><span>Stagioni viste</span><span id="anteprima-viste"></span></div>
+              <div class="bg-muted h-2 overflow-hidden rounded-full">
+                <div id="anteprima-barra" class="bg-primary h-full rounded-full"></div>
+              </div>
+            </div>
+            <p id="anteprima-voto" class="flex justify-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((n) => <StarPiena data-stella={n} class="text-muted-foreground/30 data-piena:text-warning size-5" />)}
+            </p>
+            <p id="anteprima-note"></p>
+          </CardContent>
+          <CardFooter>
+            <Button as="a" id="anteprima-trailer" target="_blank" rel="noopener" variant="primary" size="lg" class="w-full">
+              <BrandYoutube /> <span id="anteprima-testo-trailer"></span>
+            </Button>
+          </CardFooter>
+        </Card>
+      </aside>
+    </div>
+
+    <CreditiTmdb class="mt-16" />
+  </section>
+
+  <!-- Modelli clonati dallo script -->
+  <template id="modello-risultato">
+    <Button variant="ghost" class="h-auto w-full justify-start gap-3 p-2 text-left whitespace-normal">
+      <img data-miniatura alt="" class="bg-muted h-16 w-11 shrink-0 rounded object-cover" />
+      <span class="flex min-w-0 flex-col">
+        <span data-titolo class="font-medium"></span>
+        <span data-dettagli class="text-muted-foreground text-sm font-normal"></span>
+      </span>
+    </Button>
+  </template>
+  <template id="modello-genere">
+    <Badge tone="neutral" appearance="soft" size="sm" />
+  </template>
+</Layout>
+
+<script>
+  import { anni } from "@/lib/anni";
+  import { linkValido } from "@/scripts/comune";
+  import { attivaCopia, mostraStato, mostraYaml } from "@/scripts/generatore";
+  import { cercaTitoli, datiTitolo, verificaChiave, type DatiTmdb, type Risultato } from "@/scripts/dmeg/tmdb";
+  import { controlla, creaYaml, idAutomatico, leggiTitolo, type Esistente, type Titolo } from "@/scripts/dmeg/titolo";
+
+  const elemento = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  // Elementi
+  const modulo = elemento<HTMLFormElement>("dmeg");
+  const campoId = elemento<HTMLInputElement>("id");
+  const campoChiave = elemento<HTMLInputElement>("campo-chiave");
+  const campoRicerca = elemento<HTMLInputElement>("ricerca");
+  const campoStagioniViste = elemento<HTMLInputElement>("stagioniViste");
+  const risultati = elemento("risultati");
+  const modelloRisultato = elemento<HTMLTemplateElement>("modello-risultato");
+  const modelloGenere = elemento<HTMLTemplateElement>("modello-genere");
+  const campiSerie = document.querySelectorAll<HTMLElement>("[data-solo-serie]");
+
+  const esistenti: Record<number, Esistente> = JSON.parse(modulo.dataset.esistenti ?? "{}");
+
+  // Stato
+  let idManuale = false; // true quando l'id è stato scritto a mano o viene da una voce esistente
+
+  const titoloCorrente = () => leggiTitolo(new FormData(modulo));
+
+  // ----- Chiave TMDB (localStorage del browser, mai nel sito) -----
+
+  const CHIAVE = "chiave-tmdb";
+
+  function leggiChiave(): string {
+    try {
+      return localStorage.getItem(CHIAVE) ?? "";
+    } catch {
+      return "";
+    }
+  }
+
+  function mostraChiave(errore = "") {
+    elemento("chiave").dataset.stato = leggiChiave() ? "salvata" : "mancante";
+    elemento("messaggio-chiave").textContent = errore;
+    elemento("messaggio-chiave").hidden = !errore;
+  }
+
+  async function salvaChiave() {
+    const chiave = campoChiave.value.trim();
+    if (!chiave) return;
+    try {
+      await verificaChiave(chiave);
+      localStorage.setItem(CHIAVE, chiave);
+      campoChiave.value = "";
+      mostraChiave();
+      campoRicerca.focus();
+    } catch (errore) {
+      mostraChiave((errore as Error).message);
+    }
+  }
+
+  // ----- Ricerca -----
+
+  function mostraStatoRicerca(stato: "vuota" | "attesa" | "pronta" | "errore", testo = "") {
+    elemento("stato-ricerca").dataset.stato = stato;
+    elemento("testo-ricerca").textContent = testo;
+  }
+
+  let ultimaRicerca = 0; // per ignorare le risposte di ricerche nel frattempo superate
+
+  async function cerca() {
+    const testo = campoRicerca.value.trim();
+    const numero = ++ultimaRicerca;
+    if (testo.length < 2) {
+      risultati.replaceChildren();
+      return mostraStatoRicerca("vuota");
+    }
+    const chiave = leggiChiave();
+    if (!chiave) return mostraStatoRicerca("errore", "Salva prima la chiave TMDB qui sopra.");
+
+    mostraStatoRicerca("attesa", "Ricerca in corso…");
+    try {
+      const trovati = await cercaTitoli(testo, chiave);
+      if (numero !== ultimaRicerca) return;
+      risultati.replaceChildren(...trovati.map(rigaRisultato));
+      mostraStatoRicerca(trovati.length ? "vuota" : "errore", trovati.length ? "" : "Nessun film o serie trovato.");
+    } catch (errore) {
+      if (numero === ultimaRicerca) mostraStatoRicerca("errore", (errore as Error).message);
+    }
+  }
+
+  function rigaRisultato(risultato: Risultato): HTMLElement {
+    const riga = modelloRisultato.content.firstElementChild!.cloneNode(true) as HTMLElement;
+    const miniatura = riga.querySelector<HTMLImageElement>("[data-miniatura]")!;
+    if (risultato.miniatura) miniatura.src = risultato.miniatura;
+    const tipo = risultato.tipo === "film" ? "Film" : "Serie";
+    const dettagli = [risultato.titoloOriginale !== risultato.titolo && risultato.titoloOriginale, risultato.anno, tipo];
+    riga.querySelector("[data-titolo]")!.textContent = risultato.titolo;
+    riga.querySelector("[data-dettagli]")!.textContent = dettagli.filter(Boolean).join(" · ");
+    if (esistenti[risultato.tmdb]) riga.querySelector("[data-dettagli]")!.textContent += " · già in watchlist";
+    riga.addEventListener("click", () => scegli(risultato));
+    return riga;
+  }
+
+  async function scegli(risultato: Risultato) {
+    mostraStatoRicerca("attesa", `Carico «${risultato.titolo}»…`);
+    try {
+      const dati = await datiTitolo(risultato.tipo, risultato.tmdb, leggiChiave());
+      const esistente = esistenti[dati.tmdb];
+      compila(dati, esistente);
+      mostraStatoRicerca(
+        "pronta",
+        esistente
+          ? `«${dati.titolo}» è già in watchlist: dati aggiornati, i tuoi campi sono rimasti quelli.`
+          : `Caricato «${dati.titolo}».`,
+      );
+      risultati.replaceChildren();
+      modulo.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (errore) {
+      mostraStatoRicerca("errore", (errore as Error).message);
+    }
+  }
+
+  // Riempie il modulo con i dati di TMDB e, per un titolo già in watchlist, con i campi personali
+  function compila(dati: DatiTmdb, esistente?: Esistente) {
+    modulo.reset();
+    const imposta = (nome: string, valore: string | number | null) => {
+      const campo = modulo.elements.namedItem(nome) as HTMLInputElement | RadioNodeList;
+      campo.value = valore === null ? "" : String(valore);
+    };
+
+    imposta("tmdb", dati.tmdb);
+    imposta("tipo", dati.tipo);
+    imposta("titolo", dati.titolo);
+    imposta("titoloOriginale", dati.titoloOriginale);
+    imposta("generi", dati.generi.join(", "));
+    imposta("annoInizio", dati.annoInizio);
+    imposta("annoFine", dati.annoFine);
+    imposta("stagioni", dati.stagioni);
+    imposta("attori", dati.attori.join("\n"));
+    imposta("trailer", dati.trailer);
+    imposta("locandina", dati.locandina);
+    if (esistente) {
+      imposta("stato", esistente.stato);
+      imposta("stagioniViste", esistente.stagioniViste ?? 0);
+      imposta("voto", esistente.voto);
+      imposta("note", esistente.note);
+    }
+
+    idManuale = Boolean(esistente);
+    campoId.value = esistente?.id ?? "";
+    aggiorna();
+  }
+
+  // ----- Aggiornamento di anteprima, controlli e YAML -----
+
+  function aggiorna() {
+    if (!idManuale) campoId.value = idAutomatico(titoloCorrente());
+    const titolo = titoloCorrente();
+    const esistente = titolo.tmdb !== null ? esistenti[titolo.tmdb] : undefined;
+
+    campiSerie.forEach((campo) => (campo.hidden = titolo.tipo !== "serie"));
+    aggiornaAnteprima(titolo);
+    mostraStato(
+      controlla(titolo, esistenti),
+      esistente
+        ? `Voce pronta: sostituisci quella con id ${esistente.id} in src/data/watchlist.yaml.`
+        : "Voce pronta: copiala in fondo a src/data/watchlist.yaml.",
+    );
+    mostraYaml(creaYaml(titolo));
+  }
+
+  // Mostra solo l'elemento il cui data-<chiave> corrisponde al valore
+  function mostraSolo(selettore: string, chiave: string, valore: string) {
+    document.querySelectorAll<HTMLElement>(selettore).forEach((el) => (el.hidden = el.dataset[chiave] !== valore));
+  }
+
+  function aggiornaAnteprima(t: Titolo) {
+    const locandina = elemento<HTMLImageElement>("anteprima-locandina");
+    const conLocandina = linkValido(t.locandina);
+    if (conLocandina) locandina.src = t.locandina;
+    else locandina.removeAttribute("src");
+    locandina.hidden = !conLocandina;
+    elemento("anteprima-segnaposto").hidden = conLocandina;
+
+    mostraSolo("[data-anteprima-tipo]", "anteprimaTipo", t.tipo);
+    mostraSolo("[data-anteprima-stato]", "anteprimaStato", t.stato);
+
+    elemento("anteprima-titolo").textContent = t.titolo || "Titolo";
+    elemento("anteprima-originale").textContent = t.titoloOriginale;
+    elemento("anteprima-originale").hidden = !t.titoloOriginale || t.titoloOriginale === t.titolo;
+    elemento("anteprima-anni").textContent = anni(t);
+
+    elemento("anteprima-generi").replaceChildren(
+      ...t.generi.map((genere) => {
+        const chip = modelloGenere.content.firstElementChild!.cloneNode(true) as HTMLElement;
+        chip.textContent = genere;
+        return chip;
+      }),
+    );
+    elemento("anteprima-attori").textContent = t.attori.length ? `Con ${t.attori.join(", ")}` : "";
+
+    const serie = t.tipo === "serie" && Boolean(t.stagioni);
+    const viste = Math.min(t.stagioniViste ?? 0, t.stagioni ?? 0);
+    elemento("anteprima-progresso").hidden = !serie;
+    elemento("anteprima-viste").textContent = `${viste}/${t.stagioni ?? 0}`;
+    elemento("anteprima-barra").style.width = `${serie ? (viste / (t.stagioni ?? 1)) * 100 : 0}%`;
+
+    elemento("anteprima-voto").hidden = !t.voto;
+    document
+      .querySelectorAll("[data-stella]")
+      .forEach((stella) => stella.toggleAttribute("data-piena", Number(stella.getAttribute("data-stella")) <= (t.voto ?? 0)));
+    elemento("anteprima-note").textContent = t.note;
+
+    const ricerca = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${t.titolo} ${t.annoInizio ?? ""} trailer`)}`;
+    elemento<HTMLAnchorElement>("anteprima-trailer").href = linkValido(t.trailer) ? t.trailer : ricerca;
+    elemento("anteprima-testo-trailer").textContent = linkValido(t.trailer) ? "Guarda il trailer" : "Cerca il trailer";
+  }
+
+  // ----- Eventi -----
+
+  // Se l'URL della locandina non porta a un'immagine, l'anteprima torna al segnaposto
+  elemento("anteprima-locandina").addEventListener("error", () => {
+    elemento("anteprima-locandina").hidden = true;
+    elemento("anteprima-segnaposto").hidden = false;
+  });
+
+  elemento("salva-chiave").addEventListener("click", salvaChiave);
+  campoChiave.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") salvaChiave();
+  });
+  elemento("cambia-chiave").addEventListener("click", () => {
+    try {
+      localStorage.removeItem(CHIAVE);
+    } catch {}
+    mostraChiave();
+    campoChiave.focus();
+  });
+
+  let attesa: number | undefined;
+  campoRicerca.addEventListener("input", () => {
+    clearTimeout(attesa);
+    attesa = window.setTimeout(cerca, 400);
+  });
+  campoRicerca.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    clearTimeout(attesa);
+    cerca();
+  });
+
+  modulo.addEventListener("input", aggiorna);
+  modulo.addEventListener("submit", (e) => e.preventDefault());
+
+  // Scrivere nell'id lo rende manuale; svuotarlo o premere "Auto" torna alla generazione automatica
+  campoId.addEventListener("input", () => (idManuale = campoId.value.trim() !== ""));
+  elemento("id-automatico").addEventListener("click", () => {
+    idManuale = false;
+    aggiorna();
+  });
+
+  elemento("meno").addEventListener("click", () => {
+    campoStagioniViste.stepDown();
+    aggiorna();
+  });
+  elemento("piu").addEventListener("click", () => {
+    campoStagioniViste.stepUp();
+    aggiorna();
+  });
+
+  attivaCopia(() => creaYaml(titoloCorrente()));
+
+  elemento("nuova").addEventListener("click", () => {
+    modulo.reset();
+    idManuale = false;
+    risultati.replaceChildren();
+    campoRicerca.value = "";
+    mostraStatoRicerca("vuota");
+    aggiorna();
+    campoRicerca.focus();
+  });
+
+  mostraChiave();
+  aggiorna();
+</script>

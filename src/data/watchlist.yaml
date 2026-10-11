@@ -1,0 +1,89 @@
+# Watchlist: film e serie TV. Le voci si generano con DMEG (pagina /DMEG) e si incollano qui sotto.
+# "[]" indica solo che la lista è vuota: la prima voce va incollata al suo posto.
+- id: film-IlRito-2011
+  tmdb: 48171
+  tipo: "film"
+  titolo: "Il Rito"
+  titoloOriginale: "The Rite"
+  generi: ["Dramma", "Thriller", "Horror"]
+  annoInizio: 2011
+  stato: "visto"
+  attori: ["Anthony Hopkins", "Colin O'Donoghue", "Alice Braga", "Rutger Hauer", "Ciarán Hinds"]
+  trailer: "https://www.youtube.com/watch?v=nPtuzw1PXgU"
+  locandina: "https://image.tmdb.org/t/p/w342/aIPc4gxq8qgUbTb3Mh7obWFHRUr.jpg"
+  voto: 3
+  note: "Film godibile, elevato dalle ottime capacità attoriali di Hopkins. Non credo che il film abbia mai voluto essere inquietante, infatti lo reputo un film abbastanza \"leggero\". Ci sono state alcune idee carine, tra queste la scena dei chiodi è quella che mi è rimasta impressa. Tuttavia il fatto di averla ripetuta due volte, l'ha fatta cadere nella banalità."
+
+- id: film-Obsession-2026
+  tmdb: 1339713
+  tipo: "film"
+  titolo: "Obsession"
+  titoloOriginale: "Obsession"
+  generi: ["Horror", "Thriller"]
+  annoInizio: 2026
+  stato: "visto"
+  attori: ["Michael Johnston", "Inde Navarrette", "Cooper Tomlinson", "Megan Lawless", "Andy Richter"]
+  trailer: "https://www.youtube.com/watch?v=T7bMHs737HQ"
+  locandina: "https://image.tmdb.org/t/p/w342/kwprCwsIV4LvAqJC1dmiTAdZDJ1.jpg"
+  voto: 5
+  note: "Film estremamente inquietante, uno dei pochi che mi abbia fatto veramente percepire un senso di irrequietezza. Le performance attoriali in generale sono buone, ma quelle di Navarette sono state sorprendenti. Ho apprezzato anche l'ottimo lavoro di camera e di luci da parte del regista e della troupe. Sorprendente."
+
+- id: serie-RickAndMorty-2013
+  tmdb: 60625
+  tipo: "serie"
+  titolo: "Rick and Morty"
+  titoloOriginale: "Rick and Morty"
+  generi: ["Animazione", "Commedia", "Sci-Fi & Fantasy", "Action & Adventure"]
+  annoInizio: 2013
+  annoFine:
+  stagioni: 9
+  stagioniViste: 9
+  stato: "inCorso"
+  attori: ["Chris Parnell", "Spencer Grammer", "Sarah Chalke", "Justin Roiland", "Kari Wahlgren"]
+  trailer: "https://www.youtube.com/watch?v=wgfyCB34ioc"
+  locandina: "https://image.tmdb.org/t/p/w342/owhkU6KRqdXoUQpjV8uyZGPtX58.jpg"
+  voto: 4
+  note: ""
+
+- id: film-IlSilenzioDegliInnocenti-1991
+  tmdb: 274
+  tipo: "film"
+  titolo: "Il silenzio degli innocenti"
+  titoloOriginale: "The Silence of the Lambs"
+  generi: ["Crime", "Thriller", "Dramma"]
+  annoInizio: 1991
+  stato: "daVedere"
+  attori: ["Jodie Foster", "Anthony Hopkins", "Scott Glenn", "Ted Levine", "Anthony Heald"]
+  trailer: "https://www.youtube.com/watch?v=2Ou2Jqi7iS4"
+  locandina: "https://image.tmdb.org/t/p/w342/atl34CKeaKGONBdyhbIweutyZjX.jpg"
+  voto:
+  note: ""
+
+- id: film-IlCavaliereOscuro-2008
+  tmdb: 155
+  tipo: "film"
+  titolo: "Il cavaliere oscuro"
+  titoloOriginale: "The Dark Knight"
+  generi: ["Azione", "Thriller", "Crime"]
+  annoInizio: 2008
+  stato: "daVedere"
+  attori: ["Christian Bale", "Heath Ledger", "Aaron Eckhart", "Michael Caine", "Maggie Gyllenhaal"]
+  trailer: "https://www.youtube.com/watch?v=yqcDBdk8wpo"
+  locandina: "https://image.tmdb.org/t/p/w342/qIhsgno1mjbzUbs4H6DaRjhskAR.jpg"
+  voto:
+  note: ""
+
+- id: film-Hellraiser-1987
+  tmdb: 9003
+  tipo: "film"
+  titolo: "Hellraiser"
+  titoloOriginale: "Hellraiser"
+  generi: ["Horror", "Thriller"]
+  annoInizio: 1987
+  stato: "daVedere"
+  attori: ["Andrew Robinson", "Clare Higgins", "Ashley Laurence", "Oliver Smith", "Sean Chapman"]
+  trailer: "https://www.youtube.com/watch?v=tOcth6-HjPg"
+  locandina: "https://image.tmdb.org/t/p/w342/nYjXm3DGkXGo53qWus6oGMqZ9Ma.jpg"
+  voto:
+  note: ""
+

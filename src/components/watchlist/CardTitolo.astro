@@ -1,0 +1,116 @@
+---
+// Card di un film o di una serie della watchlist. Tutta la card apre il trailer su YouTube
+// (o una ricerca su YouTube se il trailer manca), come le card della wishlist.
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/starwind/card";
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import { STATI, TIPI, anni, type TitoloWatchlist } from "@/lib/watchlist";
+import BrandYoutube from "@tabler/icons/outline/brand-youtube.svg";
+import Photo from "@tabler/icons/outline/photo.svg";
+import StarPiena from "@tabler/icons/filled/star.svg";
+
+interface Props {
+  titolo: TitoloWatchlist;
+}
+
+const { data } = Astro.props.titolo;
+const tipo = TIPI[data.tipo];
+const stato = STATI[data.stato];
+const IconaTipo = tipo.icona;
+const IconaStato = stato.icona;
+const serie = data.tipo === "serie" && data.stagioni;
+const viste = Math.min(data.stagioniViste ?? 0, data.stagioni ?? 0);
+const trailer =
+  data.trailer ??
+  `https://www.youtube.com/results?search_query=${encodeURIComponent(`${data.titolo} ${data.annoInizio ?? ""} trailer`)}`;
+---
+
+<Card class:list={["relative h-full transition-all duration-100 hover:z-10 hover:scale-105", !data.locandina && "pt-0"]}>
+  {
+    data.locandina ? (
+      <img
+        src={data.locandina}
+        alt={`Locandina di ${data.titolo}`}
+        loading="lazy"
+        class="aspect-[2/3] w-full object-cover"
+      />
+    ) : (
+      <div class="bg-muted text-muted-foreground grid aspect-[2/3] w-full place-items-center rounded-t-xl">
+        <Photo class="size-12" />
+      </div>
+    )
+  }
+  <Badge tone="primary-accent" appearance="frosted" size="md" class="absolute top-0 left-0 mt-2 ml-2">
+    <IconaTipo /> {tipo.etichetta}
+  </Badge>
+  <Badge tone={stato.tono} appearance="frosted" size="md" class="absolute top-0 right-0 mt-2 mr-2">
+    <IconaStato /> {stato.etichetta}
+  </Badge>
+
+  <CardHeader>
+    <CardTitle>{data.titolo}</CardTitle>
+    {data.titoloOriginale !== data.titolo && <CardDescription class="italic">{data.titoloOriginale}</CardDescription>}
+    <CardDescription>{anni(data)}</CardDescription>
+  </CardHeader>
+
+  <CardContent class="flex h-full flex-col gap-3">
+    {
+      data.generi.length > 0 && (
+        <div class="flex flex-wrap justify-center gap-1">
+          {data.generi.map((genere) => (
+            <Badge tone="neutral" appearance="soft" size="sm">
+              {genere}
+            </Badge>
+          ))}
+        </div>
+      )
+    }
+    {data.attori.length > 0 && <p class="text-muted-foreground text-sm">Con {data.attori.join(", ")}</p>}
+    {
+      serie && (
+        <div class="flex flex-col gap-1 text-sm">
+          <div class="flex justify-between">
+            <span>Stagioni viste</span>
+            <span>
+              {viste}/{data.stagioni}
+            </span>
+          </div>
+          <div
+            role="progressbar"
+            aria-label="Stagioni viste"
+            aria-valuemin="0"
+            aria-valuemax={data.stagioni}
+            aria-valuenow={viste}
+            class="bg-muted h-2 overflow-hidden rounded-full"
+          >
+            <div class="bg-primary h-full rounded-full" style={`width: ${(viste / (data.stagioni ?? 1)) * 100}%`} />
+          </div>
+        </div>
+      )
+    }
+    {
+      data.voto && (
+        <p class="flex justify-center gap-0.5" aria-label={`Voto ${data.voto} su 5`}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <StarPiena class:list={["size-5", n <= (data.voto ?? 0) ? "text-warning" : "text-muted-foreground/30"]} />
+          ))}
+        </p>
+      )
+    }
+    {data.note && <p>{data.note}</p>}
+  </CardContent>
+
+  <CardFooter>
+    <Button
+      href={trailer}
+      target="_blank"
+      rel="noopener"
+      variant="primary"
+      size="lg"
+      class="static w-full after:absolute after:inset-0 after:z-10"
+    >
+      <BrandYoutube />
+      {data.trailer ? "Guarda il trailer" : "Cerca il trailer"}
+    </Button>
+  </CardFooter>
+</Card>

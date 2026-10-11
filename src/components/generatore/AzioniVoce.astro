@@ -1,0 +1,28 @@
+---
+// Stato della voce (cosa manca o "pronta") con i bottoni Copia YAML e Nuova voce.
+// Lo stato lo aggiorna mostraStato() di src/scripts/generatore.ts; "Nuova voce" lo gestisce la pagina.
+import { Card, CardContent } from "@/components/starwind/card";
+import { Button } from "@/components/starwind/button";
+import AlertTriangle from "@tabler/icons/outline/alert-triangle.svg";
+import Check from "@tabler/icons/outline/check.svg";
+import CircleCheck from "@tabler/icons/outline/circle-check.svg";
+import Copy from "@tabler/icons/outline/copy.svg";
+import Plus from "@tabler/icons/outline/plus.svg";
+---
+
+<Card size="sm">
+  <CardContent class="flex flex-col gap-3">
+    <div id="stato" data-stato="errore" class="group text-error data-[stato=pronta]:text-success flex items-start gap-2 text-sm">
+      <AlertTriangle class="mt-0.5 size-4 shrink-0 group-data-[stato=pronta]:hidden" />
+      <CircleCheck class="mt-0.5 hidden size-4 shrink-0 group-data-[stato=pronta]:block" />
+      <ul id="problemi" class="flex flex-col gap-1"></ul>
+    </div>
+    <Button id="copia" variant="primary" class="group w-full">
+      <Copy class="group-data-copiato:hidden" />
+      <Check class="hidden group-data-copiato:block" />
+      <span class="group-data-copiato:hidden">Copia YAML</span>
+      <span class="hidden group-data-copiato:inline">Copiato!</span>
+    </Button>
+    <Button id="nuova" variant="outline" class="w-full"><Plus /> Nuova voce</Button>
+  </CardContent>
+</Card>

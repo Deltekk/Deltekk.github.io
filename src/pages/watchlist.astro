@@ -1,0 +1,74 @@
+---
+// src/pages/watchlist.astro
+// Watchlist di film e serie TV: dati in src/data/watchlist.yaml, generati con DMEG.
+// Ricerca, filtri e ordinamento sono del componente Catalogo, come nelle wishlist.
+import Layout from "@/layouts/Layout.astro";
+import { Button } from "@/components/starwind/button";
+import Catalogo, { type Ordinamento } from "@/components/catalogo/Catalogo.astro";
+import FiltroBottoni from "@/components/catalogo/FiltroBottoni.astro";
+import CardTitolo from "@/components/watchlist/CardTitolo.astro";
+import CreditiTmdb from "@/components/watchlist/CreditiTmdb.astro";
+import { STATI, TIPI, leggiWatchlist, testoRicerca } from "@/lib/watchlist";
+import SortAsc from "@tabler/icons/outline/sort-ascending-numbers.svg";
+import SortDesc from "@tabler/icons/outline/sort-descending-numbers.svg";
+import SortLetters from "@tabler/icons/outline/sort-ascending-letters.svg";
+import Star from "@tabler/icons/outline/star.svg";
+import Plus from "@tabler/icons/outline/plus.svg";
+
+// Il primo è l'ordine iniziale, lo stesso di leggiWatchlist()
+const ordinamenti: Ordinamento[] = [
+  { valore: "anno-desc", etichetta: "Più recenti", icona: SortDesc, campo: "anno", tipo: "numero", verso: -1 },
+  { valore: "anno-asc", etichetta: "Meno recenti", icona: SortAsc, campo: "anno", tipo: "numero" },
+  { valore: "titolo", etichetta: "Titolo", icona: SortLetters, campo: "nome", tipo: "testo" },
+  { valore: "voto", etichetta: "Voto", icona: Star, campo: "voto", tipo: "numero", verso: -1 },
+];
+
+const titoli = await leggiWatchlist();
+const generi = [...new Set(titoli.flatMap((t) => t.data.generi))].sort((a, b) => a.localeCompare(b, "it"));
+
+// Opzioni dei filtri
+const opzioniTipo = Object.entries(TIPI).map(([valore, { etichetta, icona }]) => ({ valore, etichetta, icona }));
+const opzioniStato = Object.entries(STATI).map(([valore, { etichetta, icona }]) => ({ valore, etichetta, icona }));
+const opzioniGenere = generi.map((genere) => ({ valore: genere, etichetta: genere }));
+---
+
+<Layout>
+  <section class="mx-auto flex max-w-sm flex-col items-center px-6 py-16 text-center md:max-w-6xl">
+    <h1 class="mb-3 w-full text-3xl font-bold uppercase">Watchlist</h1>
+    <p class="text-muted-foreground max-w-2xl">Film e serie TV: quelli da vedere, quelli in corso e quelli già visti.</p>
+
+    {
+      titoli.length === 0 ? (
+        <div class="text-muted-foreground mt-12 flex flex-col items-center gap-4">
+          <p>La watchlist è ancora vuota.</p>
+          <Button href="/DMEG" variant="outline">
+            <Plus /> Aggiungi un titolo con DMEG
+          </Button>
+        </div>
+      ) : (
+        <Catalogo ordinamenti={ordinamenti} ricerca="Cerca per titolo, attore, genere..." griglia="sm:grid-cols-2 lg:grid-cols-4">
+          <FiltroBottoni slot="filtri" nome="tipo" etichetta="Tipo" tutti="Tutti" opzioni={opzioniTipo} />
+          <FiltroBottoni slot="filtri" nome="stato" etichetta="Stato" tutti="Tutti" opzioni={opzioniStato} />
+          <FiltroBottoni slot="filtri" nome="genere" etichetta="Genere" tutti="Tutti" opzioni={opzioniGenere} />
+
+          {titoli.map((titolo) => (
+            <div
+              data-voce
+              data-nome={titolo.data.titolo}
+              data-testo={testoRicerca(titolo.data)}
+              data-tipo={titolo.data.tipo}
+              data-stato={titolo.data.stato}
+              data-genere={titolo.data.generi.join("|")}
+              data-anno={titolo.data.annoInizio ?? ""}
+              data-voto={titolo.data.voto ?? ""}
+            >
+              <CardTitolo titolo={titolo} />
+            </div>
+          ))}
+        </Catalogo>
+      )
+    }
+
+    <CreditiTmdb class="mt-16" />
+  </section>
+</Layout>

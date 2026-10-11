@@ -1,0 +1,160 @@
+---
+// Elenco di voci con ricerca, filtri e ordinamento, condiviso da wishlist e watchlist.
+//
+// Le voci sono i figli del componente: ognuna è un elemento con data-voce e
+//   data-testo   testo in cui cercare (in minuscolo)
+//   data-nome    nome usato a parità di ordinamento
+//   data-<campo> i valori per filtri e ordinamenti; più valori per un filtro si separano con "|"
+// I filtri sono componenti FiltroBottoni nello slot "filtri".
+import type { SvgComponent } from "astro/types";
+import { Input } from "@/components/starwind/input";
+import { Select, SelectTrigger, SelectItem, SelectContent } from "@/components/starwind/select";
+import Search from "@tabler/icons/outline/search.svg";
+
+export interface Ordinamento {
+  valore: string;
+  etichetta: string;
+  icona: SvgComponent;
+  campo: string; // data-<campo> delle voci
+  tipo: "numero" | "testo";
+  verso?: 1 | -1; // -1 = decrescente
+}
+
+interface Props {
+  ordinamenti: Ordinamento[]; // il primo è quello iniziale: le voci devono arrivare già in quell'ordine
+  ricerca: string; // testo segnaposto della ricerca
+  griglia?: string; // colonne della griglia
+}
+
+const { ordinamenti, ricerca, griglia = "md:grid-cols-2 lg:grid-cols-3" } = Astro.props;
+const criteri = ordinamenti.map(({ valore, campo, tipo, verso }) => ({ valore, campo, tipo, verso }));
+---
+
+<div data-catalogo data-ordinamenti={JSON.stringify(criteri)} class="w-full">
+  <div class="my-8 flex w-full flex-col gap-5">
+    <div class="flex w-full flex-col gap-5 md:flex-row">
+      <div class="relative w-full">
+        <Search class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+        <Input data-cerca type="search" placeholder={ricerca} aria-label={ricerca} class="pl-9" />
+      </div>
+
+      <div class="relative w-full md:w-1/3">
+        {
+          ordinamenti.map(({ valore, icona: Icona }, indice) => (
+            <span
+              data-icona-ordina={valore}
+              hidden={indice !== 0}
+              class="pointer-events-none absolute top-1/2 left-3 z-10 -translate-y-1/2"
+            >
+              <Icona class="size-4" />
+            </span>
+          ))
+        }
+        <Select id="ordina" defaultValue={ordinamenti[0].valore} name="Ordina per...">
+          <SelectTrigger class="w-full pl-9" placeholder="Ordina per" />
+          <SelectContent>
+            {
+              ordinamenti.map(({ valore, etichetta, icona: Icona }) => (
+                <SelectItem value={valore}>
+                  <span class="flex items-center gap-2">
+                    <Icona class="size-4" />
+                    {etichetta}
+                  </span>
+                </SelectItem>
+              ))
+            }
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+
+    <slot name="filtri" />
+  </div>
+
+  <div data-griglia class:list={["grid gap-6", griglia]}>
+    <slot />
+  </div>
+
+  <p data-vuoto hidden class="mt-8 text-center">Nessun risultato.</p>
+</div>
+
+<script>
+  interface Criterio {
+    valore: string;
+    campo: string;
+    tipo: "numero" | "testo";
+    verso?: 1 | -1;
+  }
+  type Confronto = (a: HTMLElement, b: HTMLElement) => number;
+
+  // Elementi
+  const radice = document.querySelector<HTMLElement>("[data-catalogo]")!;
+  const griglia = radice.querySelector<HTMLElement>("[data-griglia]")!;
+  const voci = [...griglia.querySelectorAll<HTMLElement>("[data-voce]")];
+  const ricerca = radice.querySelector<HTMLInputElement>("[data-cerca]")!;
+  const vuoto = radice.querySelector<HTMLElement>("[data-vuoto]")!;
+  const bottoni = radice.querySelectorAll<HTMLElement>("[data-filtro]");
+  const iconeOrdina = radice.querySelectorAll<HTMLElement>("[data-icona-ordina]");
+  const criteri: Criterio[] = JSON.parse(radice.dataset.ordinamenti ?? "[]");
+
+  // Filtri scelti: gruppo → valore ("" = tutti)
+  const filtri: Record<string, string> = {};
+
+  const valore = (voce: HTMLElement, campo: string) => voce.dataset[campo] ?? "";
+
+  // Ricerca + filtri: una voce resta visibile se contiene il testo e rispetta ogni filtro
+  function aggiorna() {
+    const testo = ricerca.value.trim().toLowerCase();
+    let visibili = 0;
+    voci.forEach((voce) => {
+      const okTesto = valore(voce, "testo").includes(testo);
+      const okFiltri = Object.entries(filtri).every(
+        ([gruppo, scelto]) => !scelto || valore(voce, gruppo).split("|").includes(scelto),
+      );
+      voce.hidden = !(okTesto && okFiltri);
+      if (!voce.hidden) visibili++;
+    });
+    vuoto.hidden = visibili > 0;
+  }
+
+  // Ordinamento: le voci senza valore numerico vanno sempre in fondo
+  function confronto({ campo, tipo, verso = 1 }: Criterio): Confronto {
+    if (tipo === "testo") return (a, b) => valore(a, campo).localeCompare(valore(b, campo), "it") * verso;
+    return (a, b) => {
+      const va = valore(a, campo);
+      const vb = valore(b, campo);
+      if (!va || !vb) return Number(!va) - Number(!vb);
+      return (Number(va) - Number(vb)) * verso;
+    };
+  }
+
+  const perNome: Confronto = (a, b) => valore(a, "nome").localeCompare(valore(b, "nome"), "it");
+
+  function ordina(scelto: string) {
+    const criterio = criteri.find((c) => c.valore === scelto);
+    if (!criterio) return;
+    const confronta = confronto(criterio);
+    voci.sort((a, b) => confronta(a, b) || perNome(a, b)).forEach((voce) => griglia.appendChild(voce));
+  }
+
+  // Eventi
+  ricerca.addEventListener("input", aggiorna);
+
+  bottoni.forEach((bottone) =>
+    bottone.addEventListener("click", () => {
+      const gruppo = bottone.dataset.filtro!;
+      filtri[gruppo] = bottone.dataset.valore ?? "";
+      bottoni.forEach((b) => {
+        if (b.dataset.filtro === gruppo) b.setAttribute("aria-pressed", String(b === bottone));
+      });
+      aggiorna();
+    }),
+  );
+
+  // La Select di Starwind non emette "change": il valore arriva con starwind:value-change
+  radice.querySelector("#ordina")?.addEventListener("starwind:value-change", (e) => {
+    const scelto = (e as CustomEvent).detail.value;
+    iconeOrdina.forEach((icona) => (icona.hidden = icona.dataset.iconaOrdina !== scelto));
+    ordina(scelto);
+  });
+</script>

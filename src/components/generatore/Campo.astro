@@ -1,0 +1,22 @@
+---
+// Campo dei moduli dei generatori (DWEG, DMEG): etichetta con icona (slot "icona") sopra il controllo (slot predefinito).
+// Gli altri attributi (es. data-*) passano al contenitore.
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"div"> {
+  etichetta: string;
+  per?: string; // id del controllo a cui collegare l'etichetta
+  obbligatorio?: boolean;
+}
+
+const { etichetta, per, obbligatorio = false, class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["flex min-w-0 flex-col gap-2", className]} {...rest}>
+  <label for={per} class="flex items-center gap-2 text-sm font-medium">
+    <span class="text-primary-accent flex [&>svg]:size-4"><slot name="icona" /></span>
+    {etichetta}
+    {obbligatorio && <span class="text-error">*</span>}
+  </label>
+  <slot />
+</div>

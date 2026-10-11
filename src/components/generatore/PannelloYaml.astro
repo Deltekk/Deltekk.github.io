@@ -1,0 +1,22 @@
+---
+// Riquadro con lo YAML generato; lo riempie mostraYaml() di src/scripts/generatore.ts.
+// `nota`, se c'è, compare sotto lo YAML quando la pagina la rende visibile (id "nota-yaml").
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/starwind/card";
+import FileCode from "@tabler/icons/outline/file-code.svg";
+
+interface Props {
+  nota?: string;
+}
+
+const { nota } = Astro.props;
+---
+
+<Card>
+  <CardHeader>
+    <CardTitle class="flex items-center gap-2"><FileCode class="text-primary-accent size-5" /> YAML da aggiungere</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <pre id="yaml" class="bg-muted rounded-md p-4 font-mono text-sm leading-relaxed break-all whitespace-pre-wrap"></pre>
+    {nota && <p id="nota-yaml" hidden class="text-muted-foreground mt-2 text-xs">{nota}</p>}
+  </CardContent>
+</Card>

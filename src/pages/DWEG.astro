@@ -11,9 +11,11 @@ import { Input } from "@/components/starwind/input";
 import { Textarea } from "@/components/starwind/textarea";
 import { Badge } from "@/components/starwind/badge";
 import { Button } from "@/components/starwind/button";
-import { button } from "@/components/starwind/button/variants";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/starwind/input-group";
-import Campo from "@/components/dweg/Campo.astro";
+import AzioniVoce from "@/components/generatore/AzioniVoce.astro";
+import Campo from "@/components/generatore/Campo.astro";
+import PannelloYaml from "@/components/generatore/PannelloYaml.astro";
+import Scelta from "@/components/generatore/Scelta.astro";
 import { PREFISSI } from "@/scripts/dweg/voce";
 
 // ----- ICONE ------
@@ -42,10 +44,7 @@ import Star from "@tabler/icons/outline/star.svg";
 import Notes from "@tabler/icons/outline/notes.svg";
 import Hash from "@tabler/icons/outline/hash.svg";
 import Wand from "@tabler/icons/outline/wand.svg";
-import FileCode from "@tabler/icons/outline/file-code.svg";
 import Eye from "@tabler/icons/outline/eye.svg";
-import Copy from "@tabler/icons/outline/copy.svg";
-import Check from "@tabler/icons/outline/check.svg";
 import ExternalLink from "@tabler/icons/outline/external-link.svg";
 
 import Tag from "@tabler/icons/outline/tag.svg";
@@ -68,12 +67,6 @@ const ordinati = (valori: (string | undefined)[]) =>
 const categorie = ordinati([...Object.keys(PREFISSI), ...voci.map((v) => v.data.categoria)]);
 const publisher = ordinati(voci.map((v) => v.data.publisher));
 const artisti = ordinati(voci.map((v) => v.data.artista));
-
-// Radio con l'aspetto dei bottoni Starwind, evidenziato quando è selezionato
-const stileScelta = button({
-  variant: "outline",
-  class: "cursor-pointer has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:ring-3 has-focus-visible:ring-outline/50",
-});
 
 // ----- ----- -----
 ---
@@ -195,10 +188,9 @@ const stileScelta = button({
                 <Input id="prezzo" name="prezzo" inputmode="decimal" placeholder="29,90 · vuoto = N/A" />
                 <div role="radiogroup" aria-label="Valuta" class="flex gap-1">
                   {valute.map(({ simbolo, nome, Icona }) => (
-                    <label class={stileScelta} title={nome}>
-                      <input type="radio" name="valuta" value={simbolo} checked={simbolo === "€"} class="sr-only" />
+                    <Scelta nome="valuta" valore={simbolo} scelta={simbolo === "€"} titolo={nome}>
                       <Icona />
-                    </label>
+                    </Scelta>
                   ))}
                 </div>
               </div>
@@ -230,10 +222,9 @@ const stileScelta = button({
               <div class="flex flex-wrap items-center gap-3">
                 <div role="radiogroup" aria-label="Priorità" class="flex gap-1">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <label class={stileScelta}>
-                      <input type="radio" name="priorità" value={n} checked={n === 3} class="sr-only" />
+                    <Scelta nome="priorità" valore={n} scelta={n === 3}>
                       {n}
-                    </label>
+                    </Scelta>
                   ))}
                 </div>
                 <span class="text-muted-foreground text-sm">1 = lo desidero di più · 5 = di meno</span>
@@ -261,18 +252,7 @@ const stileScelta = button({
           </CardContent>
         </Card>
 
-        <!-- YAML -->
-        <Card>
-          <CardHeader>
-            <CardTitle class="flex items-center gap-2"><FileCode class="text-primary-accent size-5" /> YAML da aggiungere</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre id="yaml" class="bg-muted rounded-md p-4 font-mono text-sm leading-relaxed break-all whitespace-pre-wrap"></pre>
-            <p id="nota-yaml" hidden class="text-muted-foreground mt-2 text-xs">
-              L'immagine è abbreviata qui, ma viene copiata per intero.
-            </p>
-          </CardContent>
-        </Card>
+        <PannelloYaml nota="L'immagine è abbreviata qui, ma viene copiata per intero." />
       </div>
 
       <!-- Anteprima e azioni -->
@@ -316,33 +296,16 @@ const stileScelta = button({
           </CardFooter>
         </Card>
 
-        <Card size="sm">
-          <CardContent class="flex flex-col gap-3">
-            <div
-              id="stato"
-              data-stato="errore"
-              class="group flex items-start gap-2 text-sm text-error data-[stato=pronta]:text-success"
-            >
-              <AlertTriangle class="mt-0.5 size-4 shrink-0 group-data-[stato=pronta]:hidden" />
-              <CircleCheck class="mt-0.5 hidden size-4 shrink-0 group-data-[stato=pronta]:block" />
-              <ul id="problemi" class="flex flex-col gap-1"></ul>
-            </div>
-            <Button id="copia" variant="primary" class="group w-full">
-              <Copy class="group-data-copiato:hidden" />
-              <Check class="hidden group-data-copiato:block" />
-              <span class="group-data-copiato:hidden">Copia YAML</span>
-              <span class="hidden group-data-copiato:inline">Copiato!</span>
-            </Button>
-            <Button id="nuova" variant="outline" class="w-full"><Plus /> Nuova voce</Button>
-          </CardContent>
-        </Card>
+        <AzioniVoce />
       </aside>
     </form>
   </section>
 </Layout>
 
 <script>
-  import { controlla, creaYaml, idAutomatico, leggiVoce, linkValido, type Voce } from "@/scripts/dweg/voce";
+  import { linkValido } from "@/scripts/comune";
+  import { attivaCopia, mostraStato, mostraYaml } from "@/scripts/generatore";
+  import { controlla, creaYaml, idAutomatico, leggiVoce, type Voce } from "@/scripts/dweg/voce";
   import { convertiImmagine, scaricaImmagine, type ImmagineConvertita } from "@/scripts/dweg/immagine";
 
   const elemento = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -375,8 +338,8 @@ const stileScelta = button({
 
     chipCategorie.forEach((chip) => chip.setAttribute("aria-pressed", String(chip.dataset.categoria === voce.categoria)));
     aggiornaAnteprima(voce);
-    aggiornaStato(controlla(voce, idEsistenti));
-    elemento("yaml").textContent = creaYaml(voce, { abbreviaImmagine: true });
+    mostraStato(controlla(voce, idEsistenti), "Voce pronta: copiala in fondo al file della wishlist.");
+    mostraYaml(creaYaml(voce, { abbreviaImmagine: true }));
     elemento("nota-yaml").hidden = !voce.immagine;
   }
 
@@ -401,17 +364,6 @@ const stileScelta = button({
     if (valido) link.href = voce.link;
     else link.removeAttribute("href");
     link.toggleAttribute("data-disabled", !valido);
-  }
-
-  function aggiornaStato(problemi: string[]) {
-    const pronta = problemi.length === 0;
-    const righe = pronta ? ["Voce pronta: copiala in fondo al file della wishlist."] : problemi;
-
-    elemento("stato").dataset.stato = pronta ? "pronta" : "errore";
-    elemento("problemi").replaceChildren(
-      ...righe.map((testo) => Object.assign(document.createElement("li"), { textContent: testo })),
-    );
-    elemento<HTMLButtonElement>("copia").disabled = !pronta;
   }
 
   // ----- Immagine -----
@@ -475,12 +427,7 @@ const stileScelta = button({
     aggiorna();
   });
 
-  elemento("copia").addEventListener("click", async () => {
-    const bottone = elemento("copia");
-    await navigator.clipboard.writeText(creaYaml(voceCorrente()));
-    bottone.toggleAttribute("data-copiato", true);
-    setTimeout(() => bottone.removeAttribute("data-copiato"), 1500);
-  });
+  attivaCopia(() => creaYaml(voceCorrente()));
 
   elemento("nuova").addEventListener("click", () => {
     modulo.reset();

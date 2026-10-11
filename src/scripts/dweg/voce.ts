@@ -1,5 +1,6 @@
 // Logica di DWEG senza DOM: dai campi del modulo alla voce YAML
 // da incollare in src/data/wishlist*.yaml.
+import { camelCase, linkValido, stringa, valoreId, yaml } from "@/scripts/comune";
 
 export interface Voce {
   id: string;
@@ -50,22 +51,10 @@ export function leggiVoce(campi: FormData, immagine: string): Voce {
   };
 }
 
-// "Tree Roots & Crowns" → "TreeRootsCrowns"
-const camelCase = (testo: string) =>
-  (testo.match(/[\p{L}\p{N}]+/gu) ?? []).map((parola) => parola[0].toUpperCase() + parola.slice(1)).join("");
-
 // Prefisso-Artista/Publisher-Nome, es. V-Mezzosangue-TreeRootsCrowns
 export function idAutomatico({ categoria, artista, publisher, nome }: Voce): string {
   const prefisso = PREFISSI[categoria] ?? camelCase(categoria).slice(0, 3);
   return [prefisso, camelCase(artista || publisher), camelCase(nome)].filter(Boolean).join("-");
-}
-
-export function linkValido(link: string): boolean {
-  try {
-    return ["http:", "https:"].includes(new URL(link).protocol);
-  } catch {
-    return false;
-  }
 }
 
 // Gli stessi vincoli dello schema in src/content.config.ts, con messaggi comprensibili
@@ -83,17 +72,11 @@ export function controlla(voce: Voce, idEsistenti: Record<string, string>): stri
   return problemi;
 }
 
-// Una stringa JSON è anche una stringa YAML valida tra virgolette doppie
-const stringa = (testo: string) => JSON.stringify(testo);
-
-// Gli id semplici restano senza virgolette, come nei file esistenti
-const valoreId = (id: string) => (/^[\p{L}\p{N}][\p{L}\p{N}._+?-]*$/u.test(id) ? id : stringa(id));
-
 export function creaYaml(voce: Voce, { abbreviaImmagine = false } = {}): string {
   const immagine =
     abbreviaImmagine && voce.immagine.length > 40 ? `${voce.immagine.slice(0, 40)}…` : voce.immagine;
 
-  const righe = [
+  return yaml([
     `- id: ${valoreId(voce.id)}`,
     `  quantità: ${voce.quantità}`,
     `  categoria: ${stringa(voce.categoria)}`,
@@ -107,6 +90,5 @@ export function creaYaml(voce: Voce, { abbreviaImmagine = false } = {}): string 
     `  valuta: ${stringa(voce.valuta)}`,
     `  priorità: ${voce.priorità}`,
     `  note: ${stringa(voce.note)}`,
-  ];
-  return righe.join("\n") + "\n";
+  ]);
 }
